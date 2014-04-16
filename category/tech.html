@@ -54,6 +54,20 @@
   		<article>
 <header>
       <h1 class="entry-title">
+        <a href="/posts/2014/04/16/dnsde-aliashe-anameji-lu.html">DNS的ALIAS和ANAME记录</a>
+      </h1>
+      <p class="meta"><time datetime="2014-04-16T15:59:44" pubdate>Wed 16 April 2014</time></p>
+</header>
+
+  <div class="entry-content"><p>对于有配置过DNS的人，一般都知道DNS的A、CNAME、MX这样的记录，但是不一定大家都知道ALIAS和ANAME记录。那么这两个记录到底是什么意思呢？这两个分别是DNSimple和DNS Made Easy两个域名注册商针对Paas应用的一条特别的记录，相当顶级域名(root/base/apex domain, or top level domain)的CNAME。</p>
+<p>创建<a href="https://zh.wikipedia.org/wiki/PaaS">PaaS</a>(Platform-as-a-Service: 平台即服务)应用的时候，我们经常会使用自定义域名。这时候我们一般会用CNAME把自己的域名指向PaaS提供的一个域名。而这个域名一般是会有智能DNS解析，会把离用户最近的<a href="https://zh.wikipedia.org/wiki/%E5%85%A7%E5%AE%B9%E5%82%B3%E9%81%9E%E7%B6%B2%E8%B7%AF">CDN</a>(Content Delivery Network 内容分发网络)服务器IP返回给用户，提高访问速度。这样无论用户在世界哪个角度，都能获得比较理想的访问速度。例如把应用放在Amazon上，然后把自己注册的域名www.xxx.com指向Amazon提供的域名，然后用户访问www.xxx.com域名，实际服务由Amazon提供。这样很好很强大，对吧？那如果我们想把xxx.com也指向Amazon的应用呢？加一条xxx ...</p></div>
+  <footer>
+    <a rel="full-article" href="/posts/2014/04/16/dnsde-aliashe-anameji-lu.html">Read On &crarr;</a>
+  </footer>
+  		</article>
+  		<article>
+<header>
+      <h1 class="entry-title">
         <a href="/posts/2014/04/15/vim-0-fan-hui-dao-zui-chu-da-kai-wen-dang-de-zhuang-tai.html">VIM (0) - 返回到最初打开文档的状态</a>
       </h1>
       <p class="meta"><time datetime="2014-04-15T13:26:29" pubdate>Tue 15 April 2014</time></p>
@@ -85,6 +99,9 @@
     <h1>Recent Posts</h1>
     <ul id="recent_posts">
       <li class="post">
+          <a href="/posts/2014/04/16/dnsde-aliashe-anameji-lu.html">DNS的ALIAS和ANAME记录</a>
+      </li>
+      <li class="post">
           <a href="/posts/2014/04/15/vim-0-fan-hui-dao-zui-chu-da-kai-wen-dang-de-zhuang-tai.html">VIM (0) - 返回到最初打开文档的状态</a>
       </li>
     </ul>
@@ -100,7 +117,7 @@
 
   <section>
   <h1>Tags</h1>
-    <a href="/tag/vim.html">vim</a>  </section>
+    <a href="/tag/dns.html">DNS</a>,    <a href="/tag/vim.html">vim</a>  </section>
 
 
     <section>
