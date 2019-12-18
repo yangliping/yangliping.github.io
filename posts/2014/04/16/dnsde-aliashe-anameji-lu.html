@@ -4,8 +4,11 @@
 <!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <title>DNS的ALIAS和ANAME记录</title>
+  <title>DNS的ALIAS和ANAME记录 &mdash; Liping's Blog</title>
   <meta name="author" content="Yang Liping">
+
+
+
 
 
 
@@ -14,16 +17,15 @@
   <meta name="MobileOptimized" content="320">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <link href="http://www.yanglp.com/favicon.png" rel="icon">
+
+    <link href="http://www.yanglp.com/favicon.png" rel="icon">
+
   <link href="http://www.yanglp.com/theme/css/main.css" media="screen, projection"
         rel="stylesheet" type="text/css">
-  <script src="http://www.yanglp.com/theme/js/modernizr-2.0.js"></script>
-  <script src="http://www.yanglp.com/theme/js/ender.js"></script>
-  <script src="http://www.yanglp.com/theme/js/octopress.js" type="text/javascript"></script>
 
-  <link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic"
+  <link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic"
         rel="stylesheet" type="text/css">
-  <link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic"
+  <link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic"
         rel="stylesheet" type="text/css">
 </head>
 
@@ -35,10 +37,9 @@
   <nav role="navigation"><ul class="subscription" data-subscription="rss">
 </ul>
 
-
-<form action="http://google.com/search" method="get">
+<form action="https://www.google.com/search" method="get">
   <fieldset role="search">
-    <input type="hidden" name="q" value="site:www.yanglp.com" />
+    <input type="hidden" name="sitesearch" value="www.yanglp.com">
     <input class="search" type="text" name="q" results="0" placeholder="Search"/>
   </fieldset>
 </form>
@@ -46,7 +47,6 @@
 <ul class="main-navigation">
     <li><a href="/">Home</a></li>
     <li><a href="/archives">Arcives</a></li>
-      <li><a href="http://www.yanglp.com/pages/about.html">About</a></li>
 </ul></nav>
   <div id="main">
     <div id="content">
@@ -54,22 +54,23 @@
   <article class="hentry" role="article">
 <header>
       <h1 class="entry-title">DNS的ALIAS和ANAME记录</h1>
-      <p class="meta"><time datetime="2014-04-16T15:59:44" pubdate>Wed 16 April 2014</time></p>
+    <p class="meta">
+<time datetime="2014-04-16T15:59:43+08:00" pubdate>Wed 16 April 2014</time>    </p>
 </header>
 
   <div class="entry-content"><p>对于有配置过DNS的人，一般都知道DNS的A、CNAME、MX这样的记录，但是不一定大家都知道ALIAS和ANAME记录。那么这两个记录到底是什么意思呢？这两个分别是DNSimple和DNS Made Easy两个域名注册商针对Paas应用的一条特别的记录，相当顶级域名(root/base/apex domain, or top level domain)的CNAME。</p>
 <p>创建<a href="https://zh.wikipedia.org/wiki/PaaS">PaaS</a>(Platform-as-a-Service: 平台即服务)应用的时候，我们经常会使用自定义域名。这时候我们一般会用CNAME把自己的域名指向PaaS提供的一个域名。而这个域名一般是会有智能DNS解析，会把离用户最近的<a href="https://zh.wikipedia.org/wiki/%E5%85%A7%E5%AE%B9%E5%82%B3%E9%81%9E%E7%B6%B2%E8%B7%AF">CDN</a>(Content Delivery Network 内容分发网络)服务器IP返回给用户，提高访问速度。这样无论用户在世界哪个角度，都能获得比较理想的访问速度。例如把应用放在Amazon上，然后把自己注册的域名www.xxx.com指向Amazon提供的域名，然后用户访问www.xxx.com域名，实际服务由Amazon提供。这样很好很强大，对吧？那如果我们想把xxx.com也指向Amazon的应用呢？加一条xxx.com的CNAME记录？这是不可行的，因为<a href="http://www.ietf.org/rfc/rfc1912.txt">RFC1912</a>有如下规定：</p>
-<div class="highlight"><pre><span class="n">A</span> <span class="n">CNAME</span> <span class="n">record</span> <span class="n">is</span> <span class="n">not</span> <span class="n">allowed</span> <span class="n">to</span> <span class="n">coexist</span> <span class="n">with</span> <span class="n">any</span> <span class="n">other</span> <span class="n">data</span><span class="p">.</span>  <span class="n">In</span>
-<span class="n">other</span> <span class="n">words</span><span class="p">,</span> <span class="k">if</span> <span class="n">suzy</span><span class="p">.</span><span class="n">podunk</span><span class="p">.</span><span class="n">xx</span> <span class="n">is</span> <span class="n">an</span> <span class="n">alias</span> <span class="k">for</span> <span class="n">sue</span><span class="p">.</span><span class="n">podunk</span><span class="p">.</span><span class="n">xx</span><span class="p">,</span> <span class="n">you</span>
-<span class="n">can</span><span class="err">&#39;</span><span class="n">t</span> <span class="n">also</span> <span class="n">have</span> <span class="n">an</span> <span class="n">MX</span> <span class="n">record</span> <span class="k">for</span> <span class="n">suzy</span><span class="p">.</span><span class="n">podunk</span><span class="p">.</span><span class="n">edu</span><span class="p">,</span> <span class="n">or</span> <span class="n">an</span> <span class="n">A</span> <span class="n">record</span><span class="p">,</span> <span class="n">or</span>
-<span class="n">even</span> <span class="n">a</span> <span class="n">TXT</span> <span class="n">record</span><span class="p">.</span>  <span class="n">Especially</span> <span class="k">do</span> <span class="n">not</span> <span class="n">try</span> <span class="n">to</span> <span class="n">combine</span> <span class="n">CNAMEs</span> <span class="n">and</span> <span class="n">NS</span>
-<span class="n">records</span> <span class="n">like</span> <span class="n">this</span><span class="o">!:</span>
+<div class="highlight"><pre><span></span><span class="nv">A</span> <span class="nv">CNAME</span> <span class="nv">record</span> <span class="nv">is</span> <span class="nv">not</span> <span class="nv">allowed</span> <span class="nv">to</span> <span class="nv">coexist</span> <span class="nv">with</span> <span class="nv">any</span> <span class="nv">other</span> <span class="nv">data</span>.  <span class="nv">In</span>
+<span class="nv">other</span> <span class="nv">words</span>, <span class="k">if</span> <span class="nv">suzy</span>.<span class="nv">podunk</span>.<span class="nv">xx</span> <span class="nv">is</span> <span class="nv">an</span> <span class="nv">alias</span> <span class="k">for</span> <span class="nv">sue</span>.<span class="nv">podunk</span>.<span class="nv">xx</span>, <span class="nv">you</span>
+<span class="nv">can</span><span class="s1">&#39;</span><span class="s">t also have an MX record for suzy.podunk.edu, or an A record, or</span>
+<span class="nv">even</span> <span class="nv">a</span> <span class="nv">TXT</span> <span class="nv">record</span>.  <span class="nv">Especially</span> <span class="k">do</span> <span class="nv">not</span> <span class="nv">try</span> <span class="nv">to</span> <span class="nv">combine</span> <span class="nv">CNAMEs</span> <span class="nv">and</span> <span class="nv">NS</span>
+<span class="nv">records</span> <span class="nv">like</span> <span class="nv">this</span><span class="o">!</span>:
 
 
-           <span class="n">podunk</span><span class="p">.</span><span class="n">xx</span><span class="p">.</span>      <span class="n">IN</span>      <span class="n">NS</span>      <span class="n">ns1</span>
-                           <span class="n">IN</span>      <span class="n">NS</span>      <span class="n">ns2</span>
-                           <span class="n">IN</span>      <span class="n">CNAME</span>   <span class="n">mary</span>
-           <span class="n">mary</span>            <span class="n">IN</span>      <span class="n">A</span>       <span class="mf">1.2.3.4</span>
+           <span class="nv">podunk</span>.<span class="nv">xx</span>.      <span class="nv">IN</span>      <span class="nv">NS</span>      <span class="nv">ns1</span>
+                           <span class="nv">IN</span>      <span class="nv">NS</span>      <span class="nv">ns2</span>
+                           <span class="nv">IN</span>      <span class="nv">CNAME</span>   <span class="nv">mary</span>
+           <span class="nv">mary</span>            <span class="nv">IN</span>      <span class="nv">A</span>       <span class="mi">1</span>.<span class="mi">2</span>.<span class="mi">3</span>.<span class="mi">4</span>
 </pre></div>
 
 
@@ -77,11 +78,15 @@
     <footer>
 <p class="meta">
   <span class="byline author vcard">
-    Posted by <span class="fn">Yang Liping</span>
+    Posted by <span class="fn">
+        Yang Liping
+    </span>
   </span>
-<time datetime="2014-04-16T15:59:44" pubdate>Wed 16 April 2014</time>  <span class="categories">
-    <a class="category" href="http://www.yanglp.com/tag/dns.html">DNS</a>
+<time datetime="2014-04-16T15:59:43+08:00" pubdate>Wed 16 April 2014</time>  <span class="categories">
+    <a class='category' href='http://www.yanglp.com/category/tech.html'>Tech</a>
   </span>
+  <span class="categories">
+    <a class="category" href="http://www.yanglp.com/tag/dns.html">DNS</a>  </span>
 </p><div class="sharing">
 </div>    </footer>
   </article>
@@ -95,6 +100,9 @@
   <section>
     <h1>Recent Posts</h1>
     <ul id="recent_posts">
+      <li class="post">
+          <a href="http://www.yanglp.com/posts/2019/12/18/mvclidao-zhi-da-liang-zfs-vdevbad_ashiftri-zhi.html">mvcli导致大量zfs vdev.bad_ashift日志</a>
+      </li>
       <li class="post">
           <a href="http://www.yanglp.com/posts/2014/04/16/dnsde-aliashe-anameji-lu.html">DNS的ALIAS和ANAME记录</a>
       </li>
@@ -114,7 +122,7 @@
 
   <section>
   <h1>Tags</h1>
-    <a href="http://www.yanglp.com/tag/dns.html">DNS</a>,    <a href="http://www.yanglp.com/tag/vim.html">vim</a>  </section>
+    <a href="http://www.yanglp.com/tag/dns.html">DNS</a>,    <a href="http://www.yanglp.com/tag/zfs.html">zfs</a>,    <a href="http://www.yanglp.com/tag/vim.html">vim</a>  </section>
 
 
     <section>
@@ -129,9 +137,12 @@
 </aside>    </div>
   </div>
   <footer role="contentinfo"><p>
-      Copyright &copy; 2014 - Yang Liping -
+    Copyright &copy;  2014&ndash;2019  Yang Liping &mdash;
   <span class="credit">Powered by <a href="http://getpelican.com">Pelican</a></span>
 </p></footer>
+  <script src="http://www.yanglp.com/theme/js/modernizr-2.0.js"></script>
+  <script src="http://www.yanglp.com/theme/js/ender.js"></script>
+  <script src="http://www.yanglp.com/theme/js/octopress.js" type="text/javascript"></script>
     <script type="text/javascript">
     var _gaq = _gaq || [];
     _gaq.push(['_setAccount', 'UA-50095101-1']);
@@ -150,16 +161,16 @@
     ga('create', 'UA-50095101-1');
     ga('send', 'pageview');
 </script>
-	<script type="text/javascript">
-	  var disqus_shortname = 'yanglp';
-          var disqus_identifier = '/posts/2014/04/16/dnsde-aliashe-anameji-lu.html';
-          var disqus_url = 'http://www.yanglp.com/posts/2014/04/16/dnsde-aliashe-anameji-lu.html';
-          var disqus_title = 'DNS的ALIAS和ANAME记录';
-	  (function() {
-	    var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
-	    dsq.src = 'http://' + disqus_shortname + '.disqus.com/embed.js';
-	    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
-	   })();
-	</script>
+  <script type="text/javascript">
+    var disqus_shortname = 'yanglp';
+    var disqus_identifier = '/posts/2014/04/16/dnsde-aliashe-anameji-lu.html';
+    var disqus_url = 'http://www.yanglp.com/posts/2014/04/16/dnsde-aliashe-anameji-lu.html';
+    var disqus_title = 'DNS的ALIAS和ANAME记录';
+    (function() {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = "//" + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+     })();
+  </script>
 </body>
 </html>

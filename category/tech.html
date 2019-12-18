@@ -4,8 +4,9 @@
 <!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <title>Liping's Blog</title>
+  <title>Category: Tech &mdash; Liping's Blog</title>
   <meta name="author" content="Yang Liping">
+
 
 
 
@@ -14,16 +15,15 @@
   <meta name="MobileOptimized" content="320">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <link href="http://www.yanglp.com/favicon.png" rel="icon">
+
+    <link href="http://www.yanglp.com/favicon.png" rel="icon">
+
   <link href="http://www.yanglp.com/theme/css/main.css" media="screen, projection"
         rel="stylesheet" type="text/css">
-  <script src="http://www.yanglp.com/theme/js/modernizr-2.0.js"></script>
-  <script src="http://www.yanglp.com/theme/js/ender.js"></script>
-  <script src="http://www.yanglp.com/theme/js/octopress.js" type="text/javascript"></script>
 
-  <link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic"
+  <link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic"
         rel="stylesheet" type="text/css">
-  <link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic"
+  <link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic"
         rel="stylesheet" type="text/css">
 </head>
 
@@ -35,10 +35,9 @@
   <nav role="navigation"><ul class="subscription" data-subscription="rss">
 </ul>
 
-
-<form action="http://google.com/search" method="get">
+<form action="https://www.google.com/search" method="get">
   <fieldset role="search">
-    <input type="hidden" name="q" value="site:www.yanglp.com" />
+    <input type="hidden" name="sitesearch" value="www.yanglp.com">
     <input class="search" type="text" name="q" results="0" placeholder="Search"/>
   </fieldset>
 </form>
@@ -46,58 +45,67 @@
 <ul class="main-navigation">
     <li><a href="/">Home</a></li>
     <li><a href="/archives">Arcives</a></li>
-      <li><a href="http://www.yanglp.com/pages/about.html">About</a></li>
 </ul></nav>
   <div id="main">
     <div id="content">
-<div class="blog-index">
-  		<article>
-<header>
-      <h1 class="entry-title">
-        <a href="http://www.yanglp.com/posts/2014/04/16/dnsde-aliashe-anameji-lu.html">DNS的ALIAS和ANAME记录</a>
-      </h1>
-      <p class="meta"><time datetime="2014-04-16T15:59:44" pubdate>Wed 16 April 2014</time></p>
-</header>
+<div>
+	<article role="article">
+    	<header>
+    		<h1 class="entry-title">Category: Tech</h1>
+    	</header>
 
-  <div class="entry-content"><p>对于有配置过DNS的人，一般都知道DNS的A、CNAME、MX这样的记录，但是不一定大家都知道ALIAS和ANAME记录。那么这两个记录到底是什么意思呢？这两个分别是DNSimple和DNS Made Easy两个域名注册商针对Paas应用的一条特别的记录，相当顶级域名(root/base/apex domain, or top level domain)的CNAME。</p>
-<p>创建<a href="https://zh.wikipedia.org/wiki/PaaS">PaaS</a>(Platform-as-a-Service: 平台即服务)应用的时候，我们经常会使用自定义域名。这时候我们一般会用CNAME把自己的域名指向PaaS提供的一个域名。而这个域名一般是会有智能DNS解析，会把离用户最近的<a href="https://zh.wikipedia.org/wiki/%E5%85%A7%E5%AE%B9%E5%82%B3%E9%81%9E%E7%B6%B2%E8%B7%AF">CDN</a>(Content Delivery Network 内容分发网络)服务器IP返回给用户，提高访问速度。这样无论用户在世界哪个角度，都能获得比较理想的访问速度。例如把应用放在Amazon上，然后把自己注册的域名www.xxx.com指向Amazon提供的域名，然后用户访问www.xxx.com域名，实际服务由Amazon提供。这样很好很强大，对吧？那如果我们想把xxx.com也指向Amazon的应用呢？加一条xxx ...</p></div>
-  <footer>
-    <a rel="full-article" href="http://www.yanglp.com/posts/2014/04/16/dnsde-aliashe-anameji-lu.html">Read On &crarr;</a>
-  </footer>
-  		</article>
-  		<article>
-<header>
-      <h1 class="entry-title">
-        <a href="http://www.yanglp.com/posts/2014/04/15/vim-0-fan-hui-dao-zui-chu-da-kai-wen-dang-de-zhuang-tai.html">VIM (0) - 返回到最初打开文档的状态</a>
-      </h1>
-      <p class="meta"><time datetime="2014-04-15T13:26:29" pubdate>Tue 15 April 2014</time></p>
-</header>
-
-  <div class="entry-content"><p>在VIM中编辑文档，有时候需要撤销所有修改，恢复文档到最初的状态。这时候，我们可以一般是连续按<code>u</code>恢复到最初的状态。但如果已经修改了很多次的话，那就太麻烦了，下面是一些更简捷的方法。</p>
-<ul>
-<li>
-<p>用<code>:u1|u</code>返回最初状态，再按<code>u</code>的话状态栏会显示“Already at oldest change”，表示文档已经在最初状态。<code>u1</code>的意思是返回到修改号1(change number 1)之后，<code>|</code>不是shell中的管道，而是多个命令的分割符，所以<code>|u</code>的意思是再做一次undo。</p>
-</li>
-<li>
-<p>用<code>:earlier 10000000</code>，10000000是一个尽量大的数，这个命令的意思是返回10000000次修改以前的状态。</p>
-</li>
-<li>
-<p>用<code>10000000g-</code>，这个命令跟上面的<code>:earlier 10000000</code>是一样的意思，但是是在普通模式下输入。</p>
-</li>
-<li>
-<p>如果文档还没有保存的话，我们可以用<code>:q!</code>退出编辑，然后重新打开文档 ...</p></li></ul></div>
-  <footer>
-    <a rel="full-article" href="http://www.yanglp.com/posts/2014/04/15/vim-0-fan-hui-dao-zui-chu-da-kai-wen-dang-de-zhuang-tai.html">Read On &crarr;</a>
-  </footer>
-  		</article>
-<div class="pagination">
-
-  <br />
-</div></div>
+    	<div id="blog-archives">
+            <h2>2019</h2>
+                    <article>
+                        <h1><a href="http://www.yanglp.com/posts/2019/12/18/mvclidao-zhi-da-liang-zfs-vdevbad_ashiftri-zhi.html">mvcli导致大量zfs vdev.bad_ashift日志</a></h1>
+                        <time datetime="2019-12-18 10:21:26.155712+08:00" pubdate>
+                            <span class="month">Dec</span>
+                            <span class="day">18</span>
+                            <span class="year">2019</span>
+                        </time>
+                        <footer>
+                            <span class="categories">posted in
+                                <a class='category' href='http://www.yanglp.com/category/tech.html'>Tech</a>
+                            </span>
+                        </footer>
+                    </article>
+            <h2>2014</h2>
+                    <article>
+                        <h1><a href="http://www.yanglp.com/posts/2014/04/16/dnsde-aliashe-anameji-lu.html">DNS的ALIAS和ANAME记录</a></h1>
+                        <time datetime="2014-04-16 15:59:43+08:00" pubdate>
+                            <span class="month">Apr</span>
+                            <span class="day">16</span>
+                            <span class="year">2014</span>
+                        </time>
+                        <footer>
+                            <span class="categories">posted in
+                                <a class='category' href='http://www.yanglp.com/category/tech.html'>Tech</a>
+                            </span>
+                        </footer>
+                    </article>
+                    <article>
+                        <h1><a href="http://www.yanglp.com/posts/2014/04/15/vim-0-fan-hui-dao-zui-chu-da-kai-wen-dang-de-zhuang-tai.html">VIM (0) - 返回到最初打开文档的状态</a></h1>
+                        <time datetime="2014-04-15 13:26:29+08:00" pubdate>
+                            <span class="month">Apr</span>
+                            <span class="day">15</span>
+                            <span class="year">2014</span>
+                        </time>
+                        <footer>
+                            <span class="categories">posted in
+                                <a class='category' href='http://www.yanglp.com/category/tech.html'>Tech</a>
+                            </span>
+                        </footer>
+                    </article>
+	    </div>
+    </article>
+</div>
 <aside class="sidebar">
   <section>
     <h1>Recent Posts</h1>
     <ul id="recent_posts">
+      <li class="post">
+          <a href="http://www.yanglp.com/posts/2019/12/18/mvclidao-zhi-da-liang-zfs-vdevbad_ashiftri-zhi.html">mvcli导致大量zfs vdev.bad_ashift日志</a>
+      </li>
       <li class="post">
           <a href="http://www.yanglp.com/posts/2014/04/16/dnsde-aliashe-anameji-lu.html">DNS的ALIAS和ANAME记录</a>
       </li>
@@ -117,7 +125,7 @@
 
   <section>
   <h1>Tags</h1>
-    <a href="http://www.yanglp.com/tag/dns.html">DNS</a>,    <a href="http://www.yanglp.com/tag/vim.html">vim</a>  </section>
+    <a href="http://www.yanglp.com/tag/dns.html">DNS</a>,    <a href="http://www.yanglp.com/tag/zfs.html">zfs</a>,    <a href="http://www.yanglp.com/tag/vim.html">vim</a>  </section>
 
 
     <section>
@@ -132,9 +140,12 @@
 </aside>    </div>
   </div>
   <footer role="contentinfo"><p>
-      Copyright &copy; 2014 - Yang Liping -
+    Copyright &copy;  2014&ndash;2019  Yang Liping &mdash;
   <span class="credit">Powered by <a href="http://getpelican.com">Pelican</a></span>
 </p></footer>
+  <script src="http://www.yanglp.com/theme/js/modernizr-2.0.js"></script>
+  <script src="http://www.yanglp.com/theme/js/ender.js"></script>
+  <script src="http://www.yanglp.com/theme/js/octopress.js" type="text/javascript"></script>
     <script type="text/javascript">
     var _gaq = _gaq || [];
     _gaq.push(['_setAccount', 'UA-50095101-1']);
@@ -153,13 +164,13 @@
     ga('create', 'UA-50095101-1');
     ga('send', 'pageview');
 </script>
-	<script type="text/javascript">
-	  var disqus_shortname = 'yanglp';
-	  (function() {
-	    var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
-	    dsq.src = 'http://' + disqus_shortname + '.disqus.com/embed.js';
-	    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
-	   })();
-	</script>
+  <script type="text/javascript">
+    var disqus_shortname = 'yanglp';
+    (function() {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = "//" + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+     })();
+  </script>
 </body>
 </html>
