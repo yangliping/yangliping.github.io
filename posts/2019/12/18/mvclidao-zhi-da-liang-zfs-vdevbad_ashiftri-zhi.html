@@ -55,7 +55,7 @@
 <header>
       <h1 class="entry-title">mvcli导致大量zfs vdev.bad_ashift日志</h1>
     <p class="meta">
-<time datetime="2019-12-18T10:21:26.155712+08:00" pubdate>Wed 18 December 2019</time>    </p>
+<time datetime="2019-12-18T10:59:44.702032+08:00" pubdate>Wed 18 December 2019</time>    </p>
 </header>
 
   <div class="entry-content"><h3>发现问题</h3>
@@ -172,7 +172,7 @@
 <p>跟怎么减少日志相比，我更感兴趣的是，这些日志是怎么来的。接下来继续分析。</p>
 <h3>不正常的uevent</h3>
 <p>刚才说过，<code>vdev.bad_ashift</code>错误是在<code>vdev_open()</code>的时候产生的，但<code>vdev_open()</code>不应该经常调用的。通过观察，偶然发现磁盘链接消失。zpool使用的是scsi-xxxxxx这样的设备路径，当设备有变化的时候，<code>vdev_open()</code>被调用也就不奇怪了。</p>
-<p><img alt="dev_link_removed1" src="../images/dev_link_removed2.png"></p>
+<p><img alt="dev_link_removed1" src="/images/dev_link_removed2.png"></p>
 <p>为了证实系统确实有进行设备路径link的删除操作，用<code>udevadm monitor</code>去观察，很快就实锤。</p>
 <div class="highlight"><pre><span></span><span class="nv">monitor</span> <span class="nv">will</span> <span class="nv">print</span> <span class="nv">the</span> <span class="nv">received</span> <span class="nv">events</span> <span class="k">for</span>:
 <span class="nv">UDEV</span> <span class="o">-</span> <span class="nv">the</span> <span class="nv">event</span> <span class="nv">which</span> <span class="nv">udev</span> <span class="nv">sends</span> <span class="nv">out</span> <span class="nv">after</span> <span class="nv">rule</span> <span class="nv">processing</span>
@@ -458,7 +458,7 @@
         Yang Liping
     </span>
   </span>
-<time datetime="2019-12-18T10:21:26.155712+08:00" pubdate>Wed 18 December 2019</time>  <span class="categories">
+<time datetime="2019-12-18T10:59:44.702032+08:00" pubdate>Wed 18 December 2019</time>  <span class="categories">
     <a class='category' href='http://www.yanglp.com/category/tech.html'>Tech</a>
   </span>
   <span class="categories">
@@ -498,7 +498,7 @@
 
   <section>
   <h1>Tags</h1>
-    <a href="http://www.yanglp.com/tag/dns.html">DNS</a>,    <a href="http://www.yanglp.com/tag/zfs.html">zfs</a>,    <a href="http://www.yanglp.com/tag/vim.html">vim</a>  </section>
+    <a href="http://www.yanglp.com/tag/zfs.html">zfs</a>,    <a href="http://www.yanglp.com/tag/vim.html">vim</a>,    <a href="http://www.yanglp.com/tag/dns.html">DNS</a>  </section>
 
 
     <section>
