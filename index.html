@@ -52,6 +52,29 @@
   		<article>
 <header>
       <h1 class="entry-title">
+        <a href="http://www.yanglp.com/posts/2020/04/25/python-import-sgeku-wen-jian.html">python import sge库文件</a>
+      </h1>
+    <p class="meta">
+<time datetime="2020-04-25T15:30:46.414154+08:00" pubdate>Sat 25 April 2020</time>    </p>
+</header>
+
+  <div class="entry-content"><p>在python编程过程中，有些时候由于重用代码或者性能之类的原因，需要直接调用c语言写的库文件。python支持Cython、swig、ctypes、cffi等不同方式来调用c的代码。下面以ctypes为例，介绍怎么在python中使用sge的库文件。</p>
+<p>下载最新的Son of Grid Engine，链接https://gitlab.com/loveshack/sge (<em>注：本文档以9baeb84cdc883c4ba8b38cfc89ab8262e6d4e1d9这个commit的版本为例</em>)</p>
+<div class="highlight"><pre><span class="c"># tar zxf sge-master.tar.gz</span>
+<span class="c"># cd sge-master/source</span>
+<span class="c"># sh scripts/bootstrap.sh</span>
+</pre></div>
+
+
+<p>根据实际需求可以打开一些程序或库的<code>debug</code>选项，方便gdb进行跟踪。比如<code>test_eval_expression</code>程序，修改libs/sgeobj/Makefile下面这行：</p>
+<div class="highlight"><pre><span class="n">test_eval_expression</span><span class="o">:</span> <span class="n">test_eval_expression</span><span class="o">.</span><span class="na">o</span> <span class="n">$</span><span class="o">(</span><span class="n">SGEOBJLIB</span><span class="o">)</span> <span class="n">$</span><span class="o">(</span><span class="n">SGEOBJDLIB</span><span class="o">)</span> <span class="n">$</span><span class="o">(</span><span class="n">CULLLIB</span><span class="o">)</span> <span class="n">$</span><span class="o">(</span><span class="n">UTILIB</span><span class="o">)</span> <span class="n">$</span><span class="o">(</span><span class="n">WINGRIDLIB_DEP …</span></pre></div></div>
+  <footer>
+    <a rel="full-article" href="http://www.yanglp.com/posts/2020/04/25/python-import-sgeku-wen-jian.html">Read On &crarr;</a>
+  </footer>
+  		</article>
+  		<article>
+<header>
+      <h1 class="entry-title">
         <a href="http://www.yanglp.com/posts/2019/12/18/mvclidao-zhi-da-liang-zfs-vdevbad_ashiftri-zhi.html">mvcli导致大量zfs vdev.bad_ashift日志</a>
       </h1>
     <p class="meta">
@@ -60,11 +83,11 @@
 
   <div class="entry-content"><h3>发现问题</h3>
 <p>上周从每天的日志统计日报发现，突然部分存储服务器开始大量出现类似以下的日志：</p>
-<div class="highlight"><pre><span></span><span class="nb">Dec</span> <span class="mi">10</span> <span class="mi">15</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">59</span> <span class="n">myserver</span> <span class="n">kernel</span><span class="p">:</span> <span class="p">[</span><span class="mi">17475246</span><span class="p">.</span><span class="mi">696258</span><span class="p">]</span>  <span class="n">sdal</span><span class="p">:</span> <span class="n">sdal1</span> <span class="n">sdal9</span>
-<span class="nb">Dec</span> <span class="mi">10</span> <span class="mi">15</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mi">59</span> <span class="n">myserver</span> <span class="n">kernel</span><span class="p">:</span> <span class="n">sdal</span><span class="p">:</span> <span class="n">sdal1</span> <span class="n">sdal9</span>
-<span class="nb">Dec</span> <span class="mi">10</span> <span class="mi">15</span><span class="p">:</span><span class="mi">14</span><span class="p">:</span><span class="mi">00</span> <span class="n">myserver</span> <span class="n">kernel</span><span class="p">:</span> <span class="p">[</span><span class="mi">17475246</span><span class="p">.</span><span class="mi">882323</span><span class="p">]</span>  <span class="n">sdam</span><span class="p">:</span> <span class="n">sdam1</span> <span class="n">sdam9</span>
-<span class="nb">Dec</span> <span class="mi">10</span> <span class="mi">15</span><span class="p">:</span><span class="mi">14</span><span class="p">:</span><span class="mi">00</span> <span class="n">myserver</span> <span class="n">kernel</span><span class="p">:</span> <span class="n">sdam</span><span class="p">:</span> <span class="n">sdam1</span> <span class="n">sdam9</span>
-<span class="nb">Dec</span> <span class="mi">10</span> <span class="mi">15 …</span></pre></div></div>
+<div class="highlight"><pre><span class="n">Dec</span> <span class="mi">10</span> <span class="mi">15</span><span class="o">:</span><span class="mi">13</span><span class="o">:</span><span class="mi">59</span> <span class="n">myserver</span> <span class="n">kernel</span><span class="o">:</span> <span class="p">[</span><span class="mf">17475246.696258</span><span class="p">]</span>  <span class="n">sdal</span><span class="o">:</span> <span class="n">sdal1</span> <span class="n">sdal9</span>
+<span class="n">Dec</span> <span class="mi">10</span> <span class="mi">15</span><span class="o">:</span><span class="mi">13</span><span class="o">:</span><span class="mi">59</span> <span class="n">myserver</span> <span class="n">kernel</span><span class="o">:</span> <span class="n">sdal</span><span class="o">:</span> <span class="n">sdal1</span> <span class="n">sdal9</span>
+<span class="n">Dec</span> <span class="mi">10</span> <span class="mi">15</span><span class="o">:</span><span class="mi">14</span><span class="o">:</span><span class="mo">00</span> <span class="n">myserver</span> <span class="n">kernel</span><span class="o">:</span> <span class="p">[</span><span class="mf">17475246.882323</span><span class="p">]</span>  <span class="n">sdam</span><span class="o">:</span> <span class="n">sdam1</span> <span class="n">sdam9</span>
+<span class="n">Dec</span> <span class="mi">10</span> <span class="mi">15</span><span class="o">:</span><span class="mi">14</span><span class="o">:</span><span class="mo">00</span> <span class="n">myserver</span> <span class="n">kernel</span><span class="o">:</span> <span class="n">sdam</span><span class="o">:</span> <span class="n">sdam1</span> <span class="n">sdam9</span>
+<span class="n">Dec</span> <span class="mi">10</span> <span class="mi">15 …</span></pre></div></div>
   <footer>
     <a rel="full-article" href="http://www.yanglp.com/posts/2019/12/18/mvclidao-zhi-da-liang-zfs-vdevbad_ashiftri-zhi.html">Read On &crarr;</a>
   </footer>
@@ -119,6 +142,9 @@
     <h1>Recent Posts</h1>
     <ul id="recent_posts">
       <li class="post">
+          <a href="http://www.yanglp.com/posts/2020/04/25/python-import-sgeku-wen-jian.html">python import sge库文件</a>
+      </li>
+      <li class="post">
           <a href="http://www.yanglp.com/posts/2019/12/18/mvclidao-zhi-da-liang-zfs-vdevbad_ashiftri-zhi.html">mvcli导致大量zfs vdev.bad_ashift日志</a>
       </li>
       <li class="post">
@@ -140,7 +166,7 @@
 
   <section>
   <h1>Tags</h1>
-    <a href="http://www.yanglp.com/tag/zfs.html">zfs</a>,    <a href="http://www.yanglp.com/tag/vim.html">vim</a>,    <a href="http://www.yanglp.com/tag/dns.html">DNS</a>  </section>
+    <a href="http://www.yanglp.com/tag/python.html">python</a>,    <a href="http://www.yanglp.com/tag/zfs.html">zfs</a>,    <a href="http://www.yanglp.com/tag/sge.html">sge</a>,    <a href="http://www.yanglp.com/tag/dns.html">DNS</a>,    <a href="http://www.yanglp.com/tag/vim.html">vim</a>  </section>
 
 
     <section>
@@ -155,7 +181,7 @@
 </aside>    </div>
   </div>
   <footer role="contentinfo"><p>
-    Copyright &copy;  2014&ndash;2019  Yang Liping &mdash;
+    Copyright &copy;  2014&ndash;2020  Yang Liping &mdash;
   <span class="credit">Powered by <a href="http://getpelican.com">Pelican</a></span>
 </p></footer>
   <script src="http://www.yanglp.com/theme/js/modernizr-2.0.js"></script>

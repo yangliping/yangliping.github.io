@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>python import sge库文件 &mdash; Liping's Blog</title>
+  <meta name="author" content="Yang Liping">
+
+
+
+
+
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+
+    <link href="http://www.yanglp.com/favicon.png" rel="icon">
+
+  <link href="http://www.yanglp.com/theme/css/main.css" media="screen, projection"
+        rel="stylesheet" type="text/css">
+
+  <link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic"
+        rel="stylesheet" type="text/css">
+  <link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic"
+        rel="stylesheet" type="text/css">
+</head>
+
+<body>
+  <header role="banner"><hgroup>
+  <h1><a href="http://www.yanglp.com/">Liping's Blog</a></h1>
+    <h2>翁曰：「無他，但手熟爾。」</h2>
+</hgroup></header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+</ul>
+
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="sitesearch" value="www.yanglp.com">
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+
+<ul class="main-navigation">
+    <li><a href="/">Home</a></li>
+    <li><a href="/archives">Arcives</a></li>
+</ul></nav>
+  <div id="main">
+    <div id="content">
+<div>
+  <article class="hentry" role="article">
+<header>
+      <h1 class="entry-title">python import sge库文件</h1>
+    <p class="meta">
+<time datetime="2020-04-25T15:30:46.414154+08:00" pubdate>Sat 25 April 2020</time>    </p>
+</header>
+
+  <div class="entry-content"><p>在python编程过程中，有些时候由于重用代码或者性能之类的原因，需要直接调用c语言写的库文件。python支持Cython、swig、ctypes、cffi等不同方式来调用c的代码。下面以ctypes为例，介绍怎么在python中使用sge的库文件。</p>
+<p>下载最新的Son of Grid Engine，链接https://gitlab.com/loveshack/sge (<em>注：本文档以9baeb84cdc883c4ba8b38cfc89ab8262e6d4e1d9这个commit的版本为例</em>)</p>
+<div class="highlight"><pre><span class="c"># tar zxf sge-master.tar.gz</span>
+<span class="c"># cd sge-master/source</span>
+<span class="c"># sh scripts/bootstrap.sh</span>
+</pre></div>
+
+
+<p>根据实际需求可以打开一些程序或库的<code>debug</code>选项，方便gdb进行跟踪。比如<code>test_eval_expression</code>程序，修改libs/sgeobj/Makefile下面这行：</p>
+<div class="highlight"><pre><span class="n">test_eval_expression</span><span class="o">:</span> <span class="n">test_eval_expression</span><span class="o">.</span><span class="na">o</span> <span class="n">$</span><span class="o">(</span><span class="n">SGEOBJLIB</span><span class="o">)</span> <span class="n">$</span><span class="o">(</span><span class="n">SGEOBJDLIB</span><span class="o">)</span> <span class="n">$</span><span class="o">(</span><span class="n">CULLLIB</span><span class="o">)</span> <span class="n">$</span><span class="o">(</span><span class="n">UTILIB</span><span class="o">)</span> <span class="n">$</span><span class="o">(</span><span class="n">WINGRIDLIB_DEP</span><span class="o">)</span> <span class="n">$</span><span class="o">(</span><span class="n">COMMLIB</span><span class="o">)</span> <span class="n">$</span><span class="o">(</span><span class="n">COMMLISTSLIB</span><span class="o">)</span>
+        <span class="n">$</span><span class="o">(</span><span class="n">LD_WRAPPER</span><span class="o">)</span> <span class="n">$</span><span class="o">(</span><span class="n">CC</span><span class="o">)</span> <span class="n">$</span><span class="o">(</span><span class="n">CFLAGS</span><span class="o">)</span> <span class="o">-</span><span class="n">o</span> <span class="n">test_eval_expression</span> <span class="n">$</span><span class="o">(</span><span class="n">LFLAGS</span><span class="o">)</span> <span class="n">test_eval_expression</span><span class="o">.</span><span class="na">o</span> <span class="n">$</span><span class="o">(</span><span class="n">SGEOBJLIB</span><span class="o">)</span> <span class="n">$</span><span class="o">(</span><span class="n">SGEOBJDLIB</span><span class="o">)</span> <span class="n">$</span><span class="o">(</span><span class="n">CULLLIB</span><span class="o">)</span> <span class="n">$</span><span class="o">(</span><span class="n">COMMLIB</span><span class="o">)</span> <span class="n">$</span><span class="o">(</span><span class="n">COMMLISTSLIB</span><span class="o">)</span> <span class="n">$</span><span class="o">(</span><span class="n">UTILIB</span><span class="o">)</span> <span class="n">$</span><span class="o">(</span><span class="n">WINGRIDLIB</span><span class="o">)</span> <span class="n">$</span><span class="o">(</span><span class="n">DLLIB</span><span class="o">)</span> <span class="n">$</span><span class="o">(</span><span class="n">SECLIB</span><span class="o">)</span> <span class="n">$</span><span class="o">(</span><span class="n">LIBS</span><span class="o">)</span>
+</pre></div>
+
+
+<p>加上<code>-g</code>参数：</p>
+<div class="highlight"><pre><span class="n">test_eval_expression</span><span class="o">:</span> <span class="n">test_eval_expression</span><span class="o">.</span><span class="na">o</span> <span class="n">$</span><span class="o">(</span><span class="n">SGEOBJLIB</span><span class="o">)</span> <span class="n">$</span><span class="o">(</span><span class="n">SGEOBJDLIB</span><span class="o">)</span> <span class="n">$</span><span class="o">(</span><span class="n">CULLLIB</span><span class="o">)</span> <span class="n">$</span><span class="o">(</span><span class="n">UTILIB</span><span class="o">)</span> <span class="n">$</span><span class="o">(</span><span class="n">WINGRIDLIB_DEP</span><span class="o">)</span> <span class="n">$</span><span class="o">(</span><span class="n">COMMLIB</span><span class="o">)</span> <span class="n">$</span><span class="o">(</span><span class="n">COMMLISTSLIB</span><span class="o">)</span>
+        <span class="n">$</span><span class="o">(</span><span class="n">LD_WRAPPER</span><span class="o">)</span> <span class="n">$</span><span class="o">(</span><span class="n">CC</span><span class="o">)</span> <span class="n">$</span><span class="o">(</span><span class="n">CFLAGS</span><span class="o">)</span> <span class="o">-</span><span class="n">g</span> <span class="o">-</span><span class="n">o</span> <span class="n">test_eval_expression</span> <span class="n">$</span><span class="o">(</span><span class="n">LFLAGS</span><span class="o">)</span> <span class="n">test_eval_expression</span><span class="o">.</span><span class="na">o</span> <span class="n">$</span><span class="o">(</span><span class="n">SGEOBJLIB</span><span class="o">)</span> <span class="n">$</span><span class="o">(</span><span class="n">SGEOBJDLIB</span><span class="o">)</span> <span class="n">$</span><span class="o">(</span><span class="n">CULLLIB</span><span class="o">)</span> <span class="n">$</span><span class="o">(</span><span class="n">COMMLIB</span><span class="o">)</span> <span class="n">$</span><span class="o">(</span><span class="n">COMMLISTSLIB</span><span class="o">)</span> <span class="n">$</span><span class="o">(</span><span class="n">UTILIB</span><span class="o">)</span> <span class="n">$</span><span class="o">(</span><span class="n">WINGRIDLIB</span><span class="o">)</span> <span class="n">$</span><span class="o">(</span><span class="n">DLLIB</span><span class="o">)</span> <span class="n">$</span><span class="o">(</span><span class="n">SECLIB</span><span class="o">)</span> <span class="n">$</span><span class="o">(</span><span class="n">LIBS</span><span class="o">)</span>
+</pre></div>
+
+
+<p><code>aimk</code>选项根据实际需要选择，不清楚是什么问题，<code>-shared-libs</code>选项编译很多地方通不过。下面是一些修改记录，可能不全，请根据编译时实际错误信息进行修改。</p>
+<p><code>aimk</code>文件需要修改如下：</p>
+<div class="highlight"><pre>$ diff aimk.orig aimk
+2126a2127,2131
+&gt;    if ( <span class="nv">$SHAREDLIBS</span> == 1 ) then
+&gt;       set SHARED_PATH_NAME = `dist/util/arch -lib`
+&gt;       setenv <span class="nv">$SHARED_PATH_NAME</span> <span class="cp">${</span><span class="n">SOURCE</span><span class="cp">}</span>/<span class="cp">${</span><span class="n">COMPILE_ARCH</span><span class="cp">}</span>
+&gt;    endif
+&gt;
+2221a2227,2230
+&gt;    if ( <span class="nv">$SHAREDLIBS</span> == 1 ) then
+&gt;       unsetenv <span class="nv">$SHARED_PATH_NAME</span>
+&gt;    endif
+&gt;
+</pre></div>
+
+
+<p>很多<code>Makefile</code>文件需要修改</p>
+<div class="highlight"><pre><span class="cp">## libs/Makefile</span>
+        <span class="err">$</span><span class="p">(</span><span class="n">SHAREDLD</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">SHARED_LFLAGS</span><span class="p">)</span> <span class="o">-</span><span class="n">o</span> <span class="n">libsge</span><span class="err">$</span><span class="p">(</span><span class="n">SHAREDEXT</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">SCHEDLIB_OBJS</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">MIRLIB_OBJS</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">EVCLIB_OBJS</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">GDILIB_OBJS</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">SGEOBJLIB_OBJS</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">SGEOBJDLIB_OBJS</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">KRBLIBS</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">COMMLIB_OBJS</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">COMMLISTSLIB_OBJS</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">CULLLIB_OBJS</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">UTILIB_OBJS</span><span class="p">)</span> <span class="n">sig_handlers</span><span class="p">.</span><span class="n">o</span> <span class="err">$</span><span class="p">(</span><span class="n">LOADAVGLIBS</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">LIBS</span><span class="p">)</span> <span class="o">-</span><span class="n">lc</span> <span class="err">$</span><span class="p">(</span><span class="n">SECLIB</span><span class="p">)</span>
+
+
+<span class="cp">## libs/sgeobj/Makefile</span>
+<span class="n">libsgeobj</span><span class="err">$</span><span class="p">(</span><span class="n">SHAREDEXT</span><span class="p">)</span><span class="o">:</span> <span class="err">$</span><span class="p">(</span><span class="n">SGEOBJLIB_OBJS</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">SGEOBJDLIB</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">COMMLIB</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">CULLLIB</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">UTILIB</span><span class="p">)</span> <span class="n">version</span><span class="p">.</span><span class="n">o</span> <span class="n">sge_gdi_packet</span><span class="p">.</span><span class="n">o</span> <span class="n">sge_gdi2</span><span class="p">.</span><span class="n">o</span> <span class="n">sge_security</span><span class="p">.</span><span class="n">o</span> <span class="n">sge_gdi_packet_internal</span><span class="p">.</span><span class="n">o</span> <span class="n">sge_gdi_packet_pb_cull</span><span class="p">.</span><span class="n">o</span> <span class="n">sge_gdi_ctx</span><span class="p">.</span><span class="n">o</span> <span class="n">qm_name</span><span class="p">.</span><span class="n">o</span>
+        <span class="err">$</span><span class="p">(</span><span class="n">SHAREDLD</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">SHARED_LFLAGS</span><span class="p">)</span> <span class="o">-</span><span class="n">o</span> <span class="n">libsgeobj</span><span class="err">$</span><span class="p">(</span><span class="n">SHAREDEXT</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">SGEOBJLIB_OBJS</span><span class="p">)</span> <span class="n">version</span><span class="p">.</span><span class="n">o</span> <span class="n">sge_gdi_packet</span><span class="p">.</span><span class="n">o</span> <span class="n">sge_gdi2</span><span class="p">.</span><span class="n">o</span> <span class="n">sge_security</span><span class="p">.</span><span class="n">o</span> <span class="n">sge_gdi_packet_internal</span><span class="p">.</span><span class="n">o</span> <span class="n">sge_gdi_packet_pb_cull</span><span class="p">.</span><span class="n">o</span> <span class="n">sge_gdi_ctx</span><span class="p">.</span><span class="n">o</span> <span class="n">qm_name</span><span class="p">.</span><span class="n">o</span> <span class="o">-</span><span class="n">lsgeobjd</span> <span class="o">-</span><span class="n">lcomm</span> <span class="o">-</span><span class="n">lcommlists</span> <span class="o">-</span><span class="n">lcull</span> <span class="o">-</span><span class="n">luti</span> <span class="err">$</span><span class="p">(</span><span class="n">LIBS</span><span class="p">)</span> <span class="o">-</span><span class="n">lc</span>
+
+<span class="n">libsgeobjd</span><span class="err">$</span><span class="p">(</span><span class="n">SHAREDEXT</span><span class="p">)</span><span class="o">:</span> <span class="err">$</span><span class="p">(</span><span class="n">SGEOBJDLIB_OBJS</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">CULLLIB</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">UTILIB</span><span class="p">)</span> <span class="n">version</span><span class="p">.</span><span class="n">o</span> <span class="n">sge_gdi_packet</span><span class="p">.</span><span class="n">o</span> <span class="n">sge_gdi2</span><span class="p">.</span><span class="n">o</span>
+        <span class="err">$</span><span class="p">(</span><span class="n">SHAREDLD</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">SHARED_LFLAGS</span><span class="p">)</span> <span class="o">-</span><span class="n">o</span> <span class="n">libsgeobjd</span><span class="err">$</span><span class="p">(</span><span class="n">SHAREDEXT</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">SGEOBJDLIB_OBJS</span><span class="p">)</span> <span class="n">version</span><span class="p">.</span><span class="n">o</span> <span class="n">sge_gdi_packet</span><span class="p">.</span><span class="n">o</span> <span class="n">sge_gdi2</span><span class="p">.</span><span class="n">o</span> <span class="o">-</span><span class="n">lcull</span> <span class="o">-</span><span class="n">luti</span> <span class="err">$</span><span class="p">(</span><span class="n">LIBS</span><span class="p">)</span> <span class="o">-</span><span class="n">lc</span>
+
+
+<span class="cp">## libs/comm/Makefile</span>
+        <span class="err">$</span><span class="p">(</span><span class="n">SHAREDLD</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">SHARED_LFLAGS</span><span class="p">)</span> <span class="o">-</span><span class="n">o</span> <span class="n">libcomm</span><span class="err">$</span><span class="p">(</span><span class="n">SHAREDEXT</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">COMMLIB_OBJS</span><span class="p">)</span> <span class="o">-</span><span class="n">luti</span> <span class="err">$</span><span class="p">(</span><span class="n">DLLIB</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">LIBS</span><span class="p">)</span> <span class="o">-</span><span class="n">lcrypto</span> <span class="o">-</span><span class="n">lssl</span>
+
+
+<span class="cp">## libs/uti/Makefile</span>
+        <span class="err">$</span><span class="p">(</span><span class="n">SHAREDLD</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">SHARED_LFLAGS</span><span class="p">)</span> <span class="o">-</span><span class="n">o</span> <span class="n">libuti</span><span class="err">$</span><span class="p">(</span><span class="n">SHAREDEXT</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">UTILIB_OBJS</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">LOADAVGLIBS</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">LIBS</span><span class="p">)</span> <span class="o">-</span><span class="n">lc</span> <span class="o">-</span><span class="n">ldl</span> <span class="o">-</span><span class="n">lsgeobj</span>
+
+
+<span class="cp">## libs/spool/Makefile</span>
+<span class="nl">test_sge_spooling_utilities:</span> <span class="n">test_sge_spooling_utilities</span><span class="p">.</span><span class="n">o</span> <span class="err">$</span><span class="p">(</span><span class="n">SPOOLING_DEPS</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">SGEOBJLIB</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">SGEOBJDLIB</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">MIRLIB</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">EVCLIB</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">GDILIB</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">SCHEDLIB</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">CULLLIB</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">COMMLIB</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">COMMLISTSLIB</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">UTILIB</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">WINGRIDLIB_DEP</span><span class="p">)</span> <span class="n">sig_handlers</span><span class="p">.</span><span class="n">o</span>
+        <span class="err">$</span><span class="p">(</span><span class="n">LD_WRAPPER</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">CC</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">CFLAGS</span><span class="p">)</span> <span class="o">-</span><span class="n">o</span> <span class="n">test_sge_spooling_utilities</span> <span class="err">$</span><span class="p">(</span><span class="n">LFLAGS</span><span class="p">)</span> <span class="n">test_sge_spooling_utilities</span><span class="p">.</span><span class="n">o</span> <span class="err">$</span><span class="p">(</span><span class="n">SPOOLING_LIBS</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">SCHEDLIB</span><span class="p">)</span>  <span class="err">$</span><span class="p">(</span><span class="n">MIRLIB</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">EVCLIB</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">GDILIB</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">SGEOBJLIB</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">SGEOBJDLIB</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">COMMLIB</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">COMMLISTSLIB</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">CULLLIB</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">UTILIB</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">WINGRIDLIB</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">SECLIB</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">SLIBS</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">LIBS</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">DLLIB</span><span class="p">)</span> <span class="n">sig_handlers</span><span class="p">.</span><span class="n">o</span>
+
+<span class="nl">test_spooling_mt:</span> <span class="n">test_spooling_mt</span><span class="p">.</span><span class="n">o</span> <span class="err">$</span><span class="p">(</span><span class="n">SPOOLING_DEPS</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">SGEOBJLIB</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">SGEOBJDLIB</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">MIRLIB</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">EVCLIB</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">GDILIB</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">SCHEDLIB</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">CULLLIB</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">COMMLIB</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">COMMLISTSLIB</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">UTILIB</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">WINGRIDLIB_DEP</span><span class="p">)</span> <span class="n">sig_handlers</span><span class="p">.</span><span class="n">o</span>
+        <span class="err">$</span><span class="p">(</span><span class="n">CC</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">CFLAGS</span><span class="p">)</span> <span class="o">-</span><span class="n">o</span> <span class="n">test_spooling_mt</span> <span class="err">$</span><span class="p">(</span><span class="n">LFLAGS</span><span class="p">)</span> <span class="n">test_spooling_mt</span><span class="p">.</span><span class="n">o</span> <span class="err">$</span><span class="p">(</span><span class="n">SPOOLING_LIBS</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">SCHEDLIB</span><span class="p">)</span>  <span class="err">$</span><span class="p">(</span><span class="n">MIRLIB</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">EVCLIB</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">GDILIB</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">SGEOBJLIB</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">SGEOBJDLIB</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">COMMLIB</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">COMMLISTSLIB</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">CULLLIB</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">UTILIB</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">WINGRIDLIB</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">SECLIB</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">SLIBS</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">LIBS</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">DLLIB</span><span class="p">)</span> <span class="n">sig_handlers</span><span class="p">.</span><span class="n">o</span>
+
+
+<span class="cp">## 3rdparty/tacc_pam_sge/Makefile</span>
+<span class="err">$</span><span class="p">(</span><span class="n">TACCFOO</span><span class="p">)</span><span class="o">:</span> <span class="err">$</span><span class="p">(</span><span class="n">TACCFOO_OBJS</span><span class="p">)</span>
+        <span class="err">$</span><span class="p">(</span><span class="n">CC</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">CFLAGS</span><span class="p">)</span> <span class="o">-</span><span class="n">o</span> <span class="err">$</span><span class="p">(</span><span class="n">TACCFOO</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">TACCFOO_OBJS</span><span class="p">)</span> <span class="o">-</span><span class="n">lsge</span> <span class="o">-</span><span class="n">lsched</span> <span class="o">-</span><span class="n">levc</span> <span class="o">-</span><span class="n">lgdi</span> <span class="o">-</span><span class="n">lsgeobj</span> <span class="o">-</span><span class="n">lsgeobjd</span> <span class="o">-</span><span class="n">lcull</span> <span class="o">-</span><span class="n">lcomm</span> <span class="o">-</span><span class="n">lcommlists</span> <span class="o">-</span><span class="n">luti</span> <span class="o">-</span><span class="n">lc</span> <span class="o">-</span><span class="n">ldl</span>  <span class="o">-</span><span class="n">lm</span> <span class="o">-</span><span class="n">lpthread</span>
+
+<span class="err">$</span><span class="p">(</span><span class="n">TACCLIB</span><span class="p">)</span><span class="err">$</span><span class="p">(</span><span class="n">SHAREDEXT</span><span class="p">)</span><span class="o">:</span> <span class="err">$</span><span class="p">(</span><span class="n">TACCLIB_OBJS</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">SGEOBJDLIB</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">COMMLIB</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">COMMLISTSLIB</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">CULLLIB</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">UTILIB</span><span class="p">)</span>
+        <span class="err">$</span><span class="p">(</span><span class="n">SHAREDLD</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">SHARED_LFLAGS</span><span class="p">)</span> <span class="o">-</span><span class="n">o</span> <span class="err">$</span><span class="p">(</span><span class="n">TACCLIB</span><span class="p">)</span><span class="err">$</span><span class="p">(</span><span class="n">SHAREDEXT</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">TACCLIB_OBJS</span><span class="p">)</span> <span class="o">-</span><span class="n">lsge</span> <span class="o">-</span><span class="n">lcull</span> <span class="o">-</span><span class="n">luti</span> <span class="o">-</span><span class="n">ldl</span> <span class="o">-</span><span class="n">lpthread</span>
+
+
+<span class="cp">## libs/cull/Makefile</span>
+<span class="nl">example1:</span> <span class="err">$</span><span class="p">(</span><span class="n">EXAMPLE1_DEPS</span><span class="p">)</span> <span class="n">sge_dlopen</span><span class="p">.</span><span class="n">o</span>
+        <span class="err">$</span><span class="p">(</span><span class="n">LD_WRAPPER</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">CC</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">CFLAGS</span><span class="p">)</span> <span class="o">-</span><span class="n">o</span> <span class="n">example1</span> <span class="err">$</span><span class="p">(</span><span class="n">LFLAGS</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">EXAMPLE1_OBJS</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">LIBS</span><span class="p">)</span> <span class="n">sge_dlopen</span><span class="p">.</span><span class="n">o</span>
+
+
+<span class="cp">## libs/cull/Makefile</span>
+<span class="nl">example1:</span> <span class="err">$</span><span class="p">(</span><span class="n">EXAMPLE1_DEPS</span><span class="p">)</span>
+        <span class="err">$</span><span class="p">(</span><span class="n">LD_WRAPPER</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">CC</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">CFLAGS</span><span class="p">)</span> <span class="o">-</span><span class="n">o</span> <span class="n">example1</span> <span class="err">$</span><span class="p">(</span><span class="n">LFLAGS</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">EXAMPLE1_OBJS</span><span class="p">)</span> <span class="err">$</span><span class="p">(</span><span class="n">LIBS</span><span class="p">)</span> <span class="o">-</span><span class="n">luti</span>
+</pre></div>
+
+
+<p>然后编译sge：</p>
+<div class="highlight"><pre><span class="c"># ./aimk -no-java -no-gui-inst -debug -gprof -shared-libs -no-remote -no-qtcsh</span>
+</pre></div>
+
+
+<p>编译完成后，有个以架构命令的目录，比如<code>LINUXAMD64</code>，生成的有用文件都在目录下。把该目录加到环境变量<code>LD_LIBRARY_PATH</code>中，在python里就可以用<code>ctypes</code>模块去调用sge的模块了。</p>
+<p>最简单的使用方式是像下面这样的：</p>
+<div class="highlight"><pre><span class="o">&gt;&gt;&gt;</span> <span class="n">import</span> <span class="n">ctypes</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">libsge</span> <span class="o">=</span> <span class="n">ctypes</span><span class="p">.</span><span class="n">CDLL</span><span class="p">(</span><span class="err">&#39;</span><span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">libsge</span><span class="p">.</span><span class="n">so</span><span class="err">&#39;</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">libsge</span><span class="p">.</span><span class="n">sge_eval_expression</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="s">&quot;a*&quot;</span><span class="p">,</span> <span class="s">&quot;A&quot;</span><span class="p">)</span>
+<span class="mi">0</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">libsge</span><span class="p">.</span><span class="n">sge_eval_expression</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="s">&quot;a*&quot;</span><span class="p">,</span> <span class="s">&quot;b&quot;</span><span class="p">)</span>
+<span class="mi">1</span>
+</pre></div>
+
+
+<p>对应的c函数代码是：</p>
+<div class="highlight"><pre><span class="kt">int</span> <span class="n">sge_eval_expression</span><span class="p">(</span><span class="n">u_long32</span> <span class="n">type</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">expr</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">value</span><span class="p">,</span> <span class="n">lList</span> <span class="o">**</span><span class="n">answer_list</span><span class="p">)</span>
+</pre></div>
+
+
+<p>复杂一点特殊字符会出问题，下面的应该返回0，而不是错误：</p>
+<div class="highlight"><pre><span class="o">&gt;&gt;&gt;</span> <span class="n">libsge</span><span class="p">.</span><span class="n">sge_eval_expression</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="err">&#39;</span><span class="p">(</span><span class="n">sol</span><span class="o">-*</span><span class="mi">64</span><span class="o">|</span><span class="n">linux</span><span class="o">|</span><span class="n">hp</span><span class="o">*</span><span class="p">)</span><span class="o">&amp;!</span><span class="n">sol</span><span class="o">-</span><span class="n">sparc</span><span class="err">&#39;</span><span class="p">,</span> <span class="err">&#39;</span><span class="n">hp11</span><span class="err">&#39;</span><span class="p">,</span> <span class="n">None</span><span class="p">)</span>
+<span class="nl">error:</span> <span class="n">Parse</span> <span class="n">error</span> <span class="n">on</span> <span class="n">position</span> <span class="mi">1</span> <span class="n">of</span> <span class="n">the</span> <span class="n">expression</span> <span class="s">&quot;(&quot;</span><span class="p">.</span>
+<span class="o">-</span><span class="mi">1</span>
+</pre></div>
+
+
+<p>改为用<code>byte</code>的方式就好了：</p>
+<div class="highlight"><pre><span class="o">&gt;&gt;&gt;</span> <span class="n">libsge</span><span class="p">.</span><span class="n">sge_eval_expression</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="n">b</span><span class="err">&#39;</span><span class="p">(</span><span class="n">sol</span><span class="o">-*</span><span class="mi">64</span><span class="o">|</span><span class="n">linux</span><span class="o">|</span><span class="n">hp</span><span class="o">*</span><span class="p">)</span><span class="o">&amp;!</span><span class="n">sol</span><span class="o">-</span><span class="n">sparc</span><span class="err">&#39;</span><span class="p">,</span> <span class="n">b</span><span class="err">&#39;</span><span class="n">hp11</span><span class="err">&#39;</span><span class="p">,</span> <span class="n">None</span><span class="p">)</span>
+<span class="mi">0</span>
+</pre></div>
+
+
+<p>但这样也不代表没问题了，再试试<code>TYPE_HOST</code>类型的表达式，<code>Segmentation fault</code>了：</p>
+<div class="highlight"><pre><span class="o">&gt;&gt;&gt;</span> <span class="n">libsge</span><span class="p">.</span><span class="n">sge_eval_expression</span><span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="n">b</span><span class="err">&#39;</span><span class="n">Latte</span><span class="o">*</span><span class="err">&#39;</span><span class="p">,</span> <span class="n">b</span><span class="err">&#39;</span><span class="n">latte3</span><span class="p">.</span><span class="n">czech</span><span class="p">.</span><span class="n">sun</span><span class="p">.</span><span class="n">com</span><span class="err">&#39;</span><span class="p">,</span> <span class="n">None</span><span class="p">)</span>
+<span class="n">Segmentation</span> <span class="n">fault</span>
+</pre></div>
+
+
+<p>用gdb来debug看，出问题的是<code>sge_hostmatch()</code>：</p>
+<div class="highlight"><pre><span class="n">Program</span> <span class="n">received</span> <span class="n">signal</span> <span class="n">SIGSEGV</span><span class="p">,</span> <span class="n">Segmentation</span> <span class="n">fault</span><span class="p">.</span>
+<span class="n">bootstrap_get_ignore_fqdn</span> <span class="p">()</span> <span class="n">at</span> <span class="p">..</span><span class="o">/</span><span class="n">libs</span><span class="o">/</span><span class="n">uti</span><span class="o">/</span><span class="n">sge_bootstrap</span><span class="p">.</span><span class="n">c</span><span class="o">:</span><span class="mi">188</span>
+<span class="mi">188</span>        <span class="k">return</span> <span class="n">bootstrap</span><span class="o">-&gt;</span><span class="n">get_ignore_fqdn</span><span class="p">(</span><span class="n">bootstrap</span><span class="p">);</span>
+
+
+<span class="cp">#0  bootstrap_get_ignore_fqdn () at ../libs/uti/sge_bootstrap.c:188</span>
+<span class="cp">#1  0x00007ffff1218d75 in sge_hostcpy (dst=0x7fffffffc050 &quot; \301\377\377\377\177&quot;, raw=0x7fffffffc960 &quot;latte*&quot;)</span>
+    <span class="n">at</span> <span class="p">..</span><span class="o">/</span><span class="n">libs</span><span class="o">/</span><span class="n">uti</span><span class="o">/</span><span class="n">sge_hostname</span><span class="p">.</span><span class="n">c</span><span class="o">:</span><span class="mi">1167</span>
+<span class="cp">#2  0x00007ffff1218f0b in sge_hostmatch (h1=&lt;value optimized out&gt;, h2=0x7fffffffc160 &quot;latte3.czech.sun.com&quot;)</span>
+    <span class="n">at</span> <span class="p">..</span><span class="o">/</span><span class="n">libs</span><span class="o">/</span><span class="n">uti</span><span class="o">/</span><span class="n">sge_hostname</span><span class="p">.</span><span class="n">c</span><span class="o">:</span><span class="mi">1291</span>
+<span class="cp">#3  0x00007ffff11beb18 in MatchPattern (token_p=&lt;value optimized out&gt;, skip=&lt;value optimized out&gt;) at ../libs/sgeobj/sge_eval_expression.c:409</span>
+<span class="cp">#4  0x00007ffff11bec0d in SimpleExpression (token_p=0x7fffffffd160, skip=false) at ../libs/sgeobj/sge_eval_expression.c:376</span>
+<span class="cp">#5  0x00007ffff11bec2e in AndExpression (token_p=0x7fffffffd160, skip=false) at ../libs/sgeobj/sge_eval_expression.c:343</span>
+<span class="cp">#6  0x00007ffff11beca9 in OrExpression (token_p=0x7fffffffd160, skip=false) at ../libs/sgeobj/sge_eval_expression.c:323</span>
+<span class="cp">#7  0x00007ffff11bee30 in sge_eval_expression (type=7, expr=&lt;value optimized out&gt;, value=0x7ffff196ab78 &quot;latte3.czech.sun.com&quot;,</span>
+    <span class="n">answer_list</span><span class="o">=&lt;</span><span class="n">value</span> <span class="n">optimized</span> <span class="n">out</span><span class="o">&gt;</span><span class="p">)</span> <span class="n">at</span> <span class="p">..</span><span class="o">/</span><span class="n">libs</span><span class="o">/</span><span class="n">sgeobj</span><span class="o">/</span><span class="n">sge_eval_expression</span><span class="p">.</span><span class="n">c</span><span class="o">:</span><span class="mi">167</span>
+</pre></div>
+
+
+<p><code>sge_hostmatch()</code>代码里有解释，这个函数相当于<code>fnmatch()</code>，但是会根据配置来决定怎么去比较hostname是否一样。</p>
+<div class="highlight"><pre><span class="c1">// source/libs/uti/sge_hostname.c</span>
+
+<span class="o">/******</span> <span class="n">uti</span><span class="o">/</span><span class="n">hostname</span><span class="o">/</span><span class="n">sge_hostmatch</span><span class="p">()</span> <span class="o">********************************************</span>
+<span class="o">*</span>  <span class="n">NAME</span>
+<span class="o">*</span>     <span class="n">sge_hostmatch</span><span class="p">()</span> <span class="o">--</span> <span class="n">fnmatch</span><span class="p">()</span> <span class="k">for</span> <span class="n">hostnames</span>
+<span class="o">*</span>
+<span class="o">*</span>  <span class="n">SYNOPSIS</span>
+<span class="o">*</span>     <span class="kt">int</span> <span class="n">sge_hostmatch</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">h1</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span><span class="o">*</span><span class="n">h2</span><span class="p">)</span>
+<span class="o">*</span>
+<span class="o">*</span>  <span class="n">FUNCTION</span>
+<span class="o">*</span>     <span class="n">fnmatch</span><span class="p">()</span> <span class="k">for</span> <span class="n">hostnames</span><span class="p">.</span> <span class="n">Honours</span> <span class="n">some</span> <span class="n">configuration</span> <span class="n">values</span><span class="o">:</span>
+<span class="o">*</span>        <span class="o">-</span> <span class="n">Domain</span> <span class="n">name</span> <span class="n">may</span> <span class="n">be</span> <span class="n">ignored</span>
+<span class="o">*</span>        <span class="o">-</span> <span class="n">Domain</span> <span class="n">name</span> <span class="n">may</span> <span class="n">be</span> <span class="n">replaced</span> <span class="n">by</span> <span class="n">a</span> <span class="err">&#39;</span><span class="k">default</span> <span class="n">domain</span><span class="err">&#39;</span>
+<span class="o">*</span>        <span class="o">-</span> <span class="n">Hostnames</span> <span class="n">may</span> <span class="n">be</span> <span class="n">used</span> <span class="n">as</span> <span class="n">they</span> <span class="n">are</span><span class="p">.</span>
+<span class="o">*</span>
+<span class="o">*</span>  <span class="n">INPUTS</span>
+<span class="o">*</span>     <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">h1</span> <span class="o">-</span> <span class="mi">1</span><span class="n">st</span> <span class="n">hostname</span>
+<span class="o">*</span>     <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">h2</span> <span class="o">-</span> <span class="mi">2</span><span class="n">nd</span> <span class="n">hostname</span>
+<span class="o">*</span>
+<span class="o">*</span>  <span class="n">RESULT</span>
+<span class="o">*</span>     <span class="kt">int</span> <span class="o">-</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span> <span class="n">or</span> <span class="o">-</span><span class="mi">1</span>
+</pre></div>
+
+
+<p>具体错误是在执行<code>return bootstrap-&gt;get_ignore_fqdn(bootstrap)</code>的时候出错了，这跟<a href="https://arc.liv.ac.uk/SGE/htmlman/htmlman5/bootstrap.html">sge_bootstrap(5)</a>的<code>ignore_fqdn</code>参数有关。</p>
+<div class="highlight"><pre><span class="c1">// source/libs/uti/sge_bootstrap.c</span>
+
+<span class="kt">bool</span> <span class="nf">bootstrap_get_ignore_fqdn</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+<span class="p">{</span>
+   <span class="kt">sge_bootstrap_state_class_t</span><span class="o">*</span> <span class="n">bootstrap</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+   <span class="n">GET_SPECIFIC</span><span class="p">(</span><span class="kt">sge_bootstrap_thread_local_t</span><span class="p">,</span> <span class="n">handle</span><span class="p">,</span> <span class="n">bootstrap_thread_local_init</span><span class="p">,</span> <span class="n">sge_bootstrap_thread_local_key</span><span class="p">,</span> 
+                <span class="s">&quot;bootstrap_get_ignore_fqdn&quot;</span><span class="p">);</span>
+   <span class="n">bootstrap</span> <span class="o">=</span> <span class="n">handle</span><span class="o">-&gt;</span><span class="n">current</span><span class="p">;</span>            
+   <span class="k">return</span> <span class="n">bootstrap</span><span class="o">-&gt;</span><span class="n">get_ignore_fqdn</span><span class="p">(</span><span class="n">bootstrap</span><span class="p">);</span> <span class="c1">// &lt;= 这里报错</span>
+<span class="p">}</span>
+
+<span class="cp">#define GET_SPECIFIC(type, variable, init_func, key, func_name) \</span>
+<span class="cp">   type *variable = pthread_getspecific(key); \</span>
+<span class="cp">   if(variable == NULL) { \</span>
+<span class="cp">      int ret; \</span>
+<span class="cp">      variable = sge_malloc(sizeof(type)); \</span>
+<span class="cp">      init_func(variable); \</span>
+<span class="cp">      ret = pthread_setspecific(key, (void*)variable); \</span>
+<span class="cp">      if (ret != 0) { \</span>
+<span class="cp">         fprintf(stderr, &quot;pthread_setspecific(%s) failed: %s\n&quot;, func_name, strerror(ret)); \</span>
+<span class="cp">         abort(); \</span>
+<span class="cp">      } \</span>
+<span class="cp">   }</span>
+</pre></div>
+
+
+<p><code>sge_hostmatch()</code>的代码里需要读<code>ignore_fqdn</code>和<code>default_domain</code>参数，这些参数只能在安装的时候设置，已经在运行的系统是不能修改这两个参数的。</p>
+<p>主要问题是这个函数要在pthread线程中执行，在sge中可以通过<code>bootstrap_mt_init()</code>和<code>feature_mt_init()</code>来初始化，而在python中没有初始化相关线程就直接调用<code>sge_eval_expression()</code>，在获取线程信息的时候就会出错。</p>
+<p>默认设置下，<code>sge_hostmatch()</code>比较的时候用的还是<code>fnmatch()</code>，只是有以下部分的特殊处理，可以考虑用其他类型来代替。</p>
+<div class="highlight"><pre><span class="kt">void</span> <span class="nf">sge_hostcpy</span><span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="n">dst</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">raw</span><span class="p">)</span>
+<span class="p">{</span>
+   <span class="kt">bool</span> <span class="n">ignore_fqdn</span> <span class="o">=</span> <span class="n">bootstrap_get_ignore_fqdn</span><span class="p">();</span>  <span class="c1">// &lt;= 这里报错</span>
+   <span class="kt">bool</span> <span class="n">is_hgrp</span> <span class="o">=</span> <span class="n">is_hgroup_name</span><span class="p">(</span><span class="n">raw</span><span class="p">);</span>
+   <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">default_domain</span><span class="p">;</span>
+
+   <span class="k">if</span> <span class="p">(</span><span class="n">dst</span> <span class="o">==</span> <span class="nb">NULL</span> <span class="o">||</span> <span class="n">raw</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">)</span> <span class="p">{</span>
+      <span class="k">return</span><span class="p">;</span>
+   <span class="p">}</span>
+   <span class="k">if</span> <span class="p">(</span><span class="n">is_hgrp</span><span class="p">)</span> <span class="p">{</span>  <span class="c1">// 如果是hostgroup，直接对比，不做处理</span>
+      <span class="cm">/* hostgroup name: not in FQDN format, copy the entire string*/</span>
+      <span class="n">sge_strlcpy</span><span class="p">(</span><span class="n">dst</span><span class="p">,</span> <span class="n">raw</span><span class="p">,</span> <span class="n">CL_MAXHOSTLEN</span><span class="p">);</span>
+      <span class="k">return</span><span class="p">;</span>
+   <span class="p">}</span> 
+   <span class="k">if</span> <span class="p">(</span><span class="n">ignore_fqdn</span><span class="p">)</span> <span class="p">{</span>
+      <span class="kt">char</span> <span class="o">*</span><span class="n">s</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+      <span class="cm">/* standard: simply ignore FQDN */</span>
+
+      <span class="n">sge_strlcpy</span><span class="p">(</span><span class="n">dst</span><span class="p">,</span> <span class="n">raw</span><span class="p">,</span> <span class="n">CL_MAXHOSTLEN</span><span class="p">);</span>
+      <span class="k">if</span> <span class="p">((</span><span class="n">s</span> <span class="o">=</span> <span class="n">strchr</span><span class="p">(</span><span class="n">dst</span><span class="p">,</span> <span class="sc">&#39;.&#39;</span><span class="p">)))</span> <span class="p">{</span>  <span class="c1">// compute-0-0.hpc.cn 只返回compute-0-0进行对比</span>
+         <span class="o">*</span><span class="n">s</span> <span class="o">=</span> <span class="sc">&#39;\0&#39;</span><span class="p">;</span>
+      <span class="p">}</span>
+      <span class="k">return</span><span class="p">;</span>
+   <span class="p">}</span>
+
+  <span class="cm">/* ... skipped ... */</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>当然，也可以把代码改一下，直接返回结果，不用去获取值。</p>
+<div class="highlight"><pre><span class="cp"># diff ./source/libs/uti/sge_hostname.c.orig source/libs/uti/sge_hostname.c</span>
+<span class="mi">1167</span><span class="n">c1167</span>
+<span class="o">&lt;</span>    <span class="kt">bool</span> <span class="n">ignore_fqdn</span> <span class="o">=</span> <span class="n">bootstrap_get_ignore_fqdn</span><span class="p">();</span>
+<span class="o">---</span>
+<span class="o">&gt;</span>    <span class="kt">bool</span> <span class="n">ignore_fqdn</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+</pre></div>
+
+
+<p>这样修改编译完，再用相同的调用就不会报错了。</p>
+<p>同时通过测试也可以看到，相同的表达式，type参数不同，结果是不一样的。<code>TYPE_HOST</code>类型和别的类型最大的区别是在默认sge配置下是不比较域名部分的。</p>
+<div class="highlight"><pre><span class="o">&gt;&gt;&gt;</span> <span class="n">libsge</span><span class="p">.</span><span class="n">sge_eval_expression</span><span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="n">b</span><span class="err">&#39;</span><span class="n">Latte</span><span class="o">*</span><span class="err">&#39;</span><span class="p">,</span> <span class="n">b</span><span class="err">&#39;</span><span class="n">latte3</span><span class="p">.</span><span class="n">czech</span><span class="p">.</span><span class="n">sun</span><span class="p">.</span><span class="n">com</span><span class="err">&#39;</span><span class="p">,</span> <span class="n">None</span><span class="p">)</span>
+<span class="mi">0</span>
+
+
+<span class="o">&gt;&gt;&gt;</span> <span class="n">libsge</span><span class="p">.</span><span class="n">sge_eval_expression</span><span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="n">b</span><span class="err">&#39;</span><span class="n">Latte</span><span class="o">*</span><span class="p">.</span><span class="n">hpc</span><span class="p">.</span><span class="n">cn</span><span class="err">&#39;</span><span class="p">,</span> <span class="n">b</span><span class="err">&#39;</span><span class="n">latte3</span><span class="p">.</span><span class="n">czech</span><span class="p">.</span><span class="n">sun</span><span class="p">.</span><span class="n">com</span><span class="err">&#39;</span><span class="p">,</span> <span class="n">None</span><span class="p">)</span>
+<span class="mi">0</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">libsge</span><span class="p">.</span><span class="n">sge_eval_expression</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">b</span><span class="err">&#39;</span><span class="n">Latte</span><span class="o">*</span><span class="p">.</span><span class="n">hpc</span><span class="p">.</span><span class="n">cn</span><span class="err">&#39;</span><span class="p">,</span> <span class="n">b</span><span class="err">&#39;</span><span class="n">latte3</span><span class="p">.</span><span class="n">czech</span><span class="p">.</span><span class="n">sun</span><span class="p">.</span><span class="n">com</span><span class="err">&#39;</span><span class="p">,</span> <span class="n">None</span><span class="p">)</span>
+<span class="mi">1</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">libsge</span><span class="p">.</span><span class="n">sge_eval_expression</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="n">b</span><span class="err">&#39;</span><span class="n">Latte</span><span class="o">*</span><span class="p">.</span><span class="n">hpc</span><span class="p">.</span><span class="n">cn</span><span class="err">&#39;</span><span class="p">,</span> <span class="n">b</span><span class="err">&#39;</span><span class="n">latte3</span><span class="p">.</span><span class="n">czech</span><span class="p">.</span><span class="n">sun</span><span class="p">.</span><span class="n">com</span><span class="err">&#39;</span><span class="p">,</span> <span class="n">None</span><span class="p">)</span>
+<span class="mi">1</span>
+</pre></div>
+
+
+<p>如果更严谨点，可以指定函数接口类型，具体参考<a href="https://docs.python.org/3/library/ctypes.html">python ctypes官方文档</a>。</p>
+<div class="highlight"><pre><span class="o">&gt;&gt;&gt;</span> <span class="n">class</span> <span class="n">lList</span><span class="p">(</span><span class="n">ctypes</span><span class="p">.</span><span class="n">Structure</span><span class="p">)</span><span class="o">:</span>
+<span class="p">...</span>     <span class="n">pass</span>
+<span class="p">...</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">libsge</span> <span class="o">=</span> <span class="n">ctypes</span><span class="p">.</span><span class="n">CDLL</span><span class="p">(</span><span class="err">&#39;</span><span class="n">libsge</span><span class="p">.</span><span class="n">so</span><span class="err">&#39;</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">libsge</span><span class="p">.</span><span class="n">sge_eval_expression</span><span class="p">.</span><span class="n">argtypes</span> <span class="o">=</span> <span class="p">[</span><span class="n">ctypes</span><span class="p">.</span><span class="n">c_long</span><span class="p">,</span> <span class="n">ctypes</span><span class="p">.</span><span class="n">c_char_p</span><span class="p">,</span> <span class="n">ctypes</span><span class="p">.</span><span class="n">c_char_p</span><span class="p">,</span> <span class="n">ctypes</span><span class="p">.</span><span class="n">POINTER</span><span class="p">(</span><span class="n">ctypes</span><span class="p">.</span><span class="n">POINTER</span><span class="p">(</span><span class="n">lList</span><span class="p">))]</span>
+<span class="o">&gt;&gt;&gt;</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">TYPE_INT</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">TYPE_FIRST</span> <span class="o">=</span> <span class="n">TYPE_INT</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">TYPE_STR</span> <span class="o">=</span> <span class="mi">2</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">TYPE_TIM</span> <span class="o">=</span> <span class="mi">3</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">TYPE_MEM</span> <span class="o">=</span> <span class="mi">4</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">TYPE_BOO</span> <span class="o">=</span> <span class="mi">5</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">TYPE_CSTR</span> <span class="o">=</span> <span class="mi">6</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">TYPE_HOST</span> <span class="o">=</span> <span class="mi">7</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">TYPE_DOUBLE</span> <span class="o">=</span> <span class="mi">8</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">TYPE_RESTR</span> <span class="o">=</span> <span class="mi">9</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">TYPE_CE_LAST</span> <span class="o">=</span> <span class="n">TYPE_RESTR</span>
+<span class="o">&gt;&gt;&gt;</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">libsge</span><span class="p">.</span><span class="n">sge_eval_expression</span><span class="p">(</span><span class="n">TYPE_CSTR</span><span class="p">,</span> <span class="n">b</span><span class="err">&#39;</span><span class="p">(</span><span class="n">sol</span><span class="o">-*</span><span class="mi">64</span><span class="o">|</span><span class="n">linux</span><span class="o">|</span><span class="n">hp</span><span class="o">*</span><span class="p">)</span><span class="o">&amp;!</span><span class="n">sol</span><span class="o">-</span><span class="n">sparc</span><span class="err">&#39;</span><span class="p">,</span> <span class="n">b</span><span class="err">&#39;</span><span class="n">hp11</span><span class="err">&#39;</span><span class="p">,</span> <span class="n">None</span><span class="p">)</span>
+<span class="mi">0</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">libsge</span><span class="p">.</span><span class="n">sge_eval_expression</span><span class="p">(</span><span class="n">TYPE_CSTR</span><span class="p">,</span> <span class="n">b</span><span class="s">&quot;a*&quot;</span><span class="p">,</span> <span class="n">b</span><span class="s">&quot;A&quot;</span><span class="p">,</span> <span class="n">None</span><span class="p">)</span>
+<span class="mi">0</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">libsge</span><span class="p">.</span><span class="n">sge_eval_expression</span><span class="p">(</span><span class="n">TYPE_STR</span><span class="p">,</span> <span class="n">b</span><span class="s">&quot;a&amp;&quot;</span><span class="p">,</span> <span class="n">b</span><span class="s">&quot;a&quot;</span><span class="p">,</span> <span class="n">None</span><span class="p">)</span>
+<span class="nl">error:</span> <span class="n">Parse</span> <span class="n">error</span> <span class="n">on</span> <span class="n">position</span> <span class="mi">2</span> <span class="n">of</span> <span class="n">the</span> <span class="n">expression</span> <span class="s">&quot;a&amp;&quot;</span><span class="p">.</span>
+<span class="o">-</span><span class="mi">1</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">libsge</span><span class="p">.</span><span class="n">sge_eval_expression</span><span class="p">(</span><span class="n">TYPE_CSTR</span><span class="p">,</span> <span class="n">b</span><span class="s">&quot;a*&quot;</span><span class="p">,</span> <span class="n">b</span><span class="s">&quot;A&quot;</span><span class="p">,</span> <span class="n">None</span><span class="p">)</span>
+<span class="mi">1</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">libsge</span><span class="p">.</span><span class="n">sge_eval_expression</span><span class="p">(</span><span class="n">TYPE_HOST</span><span class="p">,</span> <span class="n">b</span><span class="err">&#39;</span><span class="n">Latte</span><span class="o">*</span><span class="err">&#39;</span><span class="p">,</span> <span class="n">b</span><span class="err">&#39;</span><span class="n">latte3</span><span class="p">.</span><span class="n">czech</span><span class="p">.</span><span class="n">sun</span><span class="p">.</span><span class="n">com</span><span class="err">&#39;</span><span class="p">,</span> <span class="n">None</span><span class="p">)</span>
+<span class="mi">1</span>
+</pre></div></div>
+    <footer>
+<p class="meta">
+  <span class="byline author vcard">
+    Posted by <span class="fn">
+        Yang Liping
+    </span>
+  </span>
+<time datetime="2020-04-25T15:30:46.414154+08:00" pubdate>Sat 25 April 2020</time>  <span class="categories">
+    <a class='category' href='http://www.yanglp.com/category/tech.html'>Tech</a>
+  </span>
+  <span class="categories">
+    <a class="category" href="http://www.yanglp.com/tag/python.html">python</a>,    <a class="category" href="http://www.yanglp.com/tag/sge.html">sge</a>  </span>
+</p><div class="sharing">
+</div>    </footer>
+  </article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript></div>
+  </section>
+</div>
+<aside class="sidebar">
+  <section>
+    <h1>Recent Posts</h1>
+    <ul id="recent_posts">
+      <li class="post">
+          <a href="http://www.yanglp.com/posts/2020/04/25/python-import-sgeku-wen-jian.html">python import sge库文件</a>
+      </li>
+      <li class="post">
+          <a href="http://www.yanglp.com/posts/2019/12/18/mvclidao-zhi-da-liang-zfs-vdevbad_ashiftri-zhi.html">mvcli导致大量zfs vdev.bad_ashift日志</a>
+      </li>
+      <li class="post">
+          <a href="http://www.yanglp.com/posts/2014/04/16/dnsde-aliashe-anameji-lu.html">DNS的ALIAS和ANAME记录</a>
+      </li>
+      <li class="post">
+          <a href="http://www.yanglp.com/posts/2014/04/15/vim-0-fan-hui-dao-zui-chu-da-kai-wen-dang-de-zhuang-tai.html">VIM (0) - 返回到最初打开文档的状态</a>
+      </li>
+    </ul>
+  </section>
+  <section>
+      
+    <h1>Categories</h1>
+    <ul id="recent_posts">
+        <li><a href="http://www.yanglp.com/category/tech.html">Tech</a></li>
+    </ul>
+  </section>
+ 
+
+  <section>
+  <h1>Tags</h1>
+    <a href="http://www.yanglp.com/tag/python.html">python</a>,    <a href="http://www.yanglp.com/tag/zfs.html">zfs</a>,    <a href="http://www.yanglp.com/tag/sge.html">sge</a>,    <a href="http://www.yanglp.com/tag/dns.html">DNS</a>,    <a href="http://www.yanglp.com/tag/vim.html">vim</a>  </section>
+
+
+    <section>
+        <h1>Blogroll</h1>
+        <ul>
+            <li><a href="http://getpelican.com/" target="_blank">Pelican</a></li>
+            <li><a href="http://python.org/" target="_blank">Python.org</a></li>
+            <li><a href="http://jinja.pocoo.org/" target="_blank">Jinja2</a></li>
+        </ul>
+    </section>
+
+</aside>    </div>
+  </div>
+  <footer role="contentinfo"><p>
+    Copyright &copy;  2014&ndash;2020  Yang Liping &mdash;
+  <span class="credit">Powered by <a href="http://getpelican.com">Pelican</a></span>
+</p></footer>
+  <script src="http://www.yanglp.com/theme/js/modernizr-2.0.js"></script>
+  <script src="http://www.yanglp.com/theme/js/ender.js"></script>
+  <script src="http://www.yanglp.com/theme/js/octopress.js" type="text/javascript"></script>
+    <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-50095101-1']);
+    _gaq.push(['_trackPageview']);
+    (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-50095101-1');
+    ga('send', 'pageview');
+</script>
+  <script type="text/javascript">
+    var disqus_shortname = 'yanglp';
+    var disqus_identifier = '/posts/2020/04/25/python-import-sgeku-wen-jian.html';
+    var disqus_url = 'http://www.yanglp.com/posts/2020/04/25/python-import-sgeku-wen-jian.html';
+    var disqus_title = 'python import sge库文件';
+    (function() {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = "//" + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+     })();
+  </script>
+</body>
+</html>
