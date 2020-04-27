@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>bash引用命令参数 &mdash; Liping's Blog</title>
+  <meta name="author" content="Yang Liping">
+
+
+
+
+
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+
+    <link href="http://www.yanglp.com/favicon.png" rel="icon">
+
+  <link href="http://www.yanglp.com/theme/css/main.css" media="screen, projection"
+        rel="stylesheet" type="text/css">
+
+  <link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic"
+        rel="stylesheet" type="text/css">
+  <link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic"
+        rel="stylesheet" type="text/css">
+</head>
+
+<body>
+  <header role="banner"><hgroup>
+  <h1><a href="http://www.yanglp.com/">Liping's Blog</a></h1>
+    <h2>翁曰：「無他，但手熟爾。」</h2>
+</hgroup></header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+</ul>
+
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="sitesearch" value="www.yanglp.com">
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+
+<ul class="main-navigation">
+    <li><a href="/">Home</a></li>
+    <li><a href="/archives">Arcives</a></li>
+</ul></nav>
+  <div id="main">
+    <div id="content">
+<div>
+  <article class="hentry" role="article">
+<header>
+      <h1 class="entry-title">bash引用命令参数</h1>
+    <p class="meta">
+<time datetime="2020-04-27T09:35:58.251611+08:00" pubdate>Mon 27 April 2020</time>    </p>
+</header>
+
+  <div class="entry-content"><h2><code>!-n</code></h2>
+<p>引用之前输入过的命令，比如<code>!-1</code>代表上一个命令，<code>!-2</code>代表上上个命令</p>
+<div class="highlight"><pre><span class="err">$</span> <span class="n">echo</span> <span class="s">&quot;hello world!&quot;</span>
+<span class="n">hello</span> <span class="n">world</span><span class="o">!</span>
+<span class="err">$</span> <span class="n">cd</span>
+<span class="err">$</span> <span class="o">!-</span><span class="mi">2</span>  <span class="err">#</span> <span class="o">!-</span><span class="mi">1</span> <span class="n">is</span> <span class="s">&quot;cd&quot;</span> <span class="n">and</span> <span class="o">!-</span><span class="mi">2</span> <span class="n">is</span> <span class="err">&#39;</span><span class="n">echo</span> <span class="s">&quot;hello world!&quot;</span><span class="err">&#39;</span>
+<span class="err">$</span> <span class="n">echo</span> <span class="s">&quot;hello world&quot;</span>
+<span class="n">hello</span> <span class="n">world</span>
+</pre></div>
+
+
+<p><code>!!</code> 等价于<code>!-1</code></p>
+<div class="highlight"><pre><span class="err">$</span> <span class="n">echo</span> <span class="s">&quot;hello world!&quot;</span>
+<span class="n">hello</span> <span class="n">world</span><span class="o">!</span>
+<span class="err">$</span> <span class="o">!!</span>
+<span class="err">$</span> <span class="n">echo</span> <span class="s">&quot;hello world&quot;</span>
+<span class="n">hello</span> <span class="n">world</span>
+</pre></div>
+
+
+<p><code>!!</code> 在sudo的时候比较有用</p>
+<div class="highlight"><pre><span class="err">$</span> <span class="n">vim</span> <span class="o">/</span><span class="n">etc</span><span class="o">/</span><span class="n">myfile</span>
+<span class="nl">vim:</span> <span class="o">/</span><span class="n">etc</span><span class="o">/</span><span class="n">myfile</span><span class="o">:</span> <span class="n">Permission</span> <span class="n">denied</span>
+<span class="err">$</span> <span class="n">sudo</span> <span class="o">!!</span>
+<span class="err">$</span> <span class="n">sudo</span> <span class="n">vim</span> <span class="o">/</span><span class="n">etc</span><span class="o">/</span><span class="n">myfile</span>
+</pre></div>
+
+
+<h2>引用之前输入过的命令的参数</h2>
+<p><code>!^</code> 代表上次输入命令的第一个参数，<code>!$</code> 代表上次输入命令的最后一个参数，<code>!!:n</code> 代表上次输入命令的第n个参数</p>
+<div class="highlight"><pre><span class="err">$</span> <span class="n">touch</span> <span class="n">first</span><span class="p">.</span><span class="n">txt</span> <span class="n">second</span><span class="p">.</span><span class="n">txt</span> <span class="n">last</span><span class="p">.</span><span class="n">txt</span>
+<span class="err">$</span> <span class="n">vim</span> <span class="o">!!:</span><span class="mi">2</span>
+<span class="err">$</span> <span class="n">vim</span> <span class="n">second</span><span class="p">.</span><span class="n">txt</span>
+</pre></div>
+
+
+<p>当然，如上面介绍，<code>!!</code> 可以换成 <code>!-n</code> 代表上几个命令。</p>
+<p>如果是引用上次输入命令的参数，还有一种快捷键方式</p>
+<div class="highlight"><pre><span class="n">yank</span><span class="o">-</span><span class="n">nth</span><span class="o">-</span><span class="n">arg</span> <span class="p">(</span><span class="n">M</span><span class="o">-</span><span class="n">C</span><span class="o">-</span><span class="n">y</span><span class="p">)</span> <span class="err">引用上次输入命令的第</span><span class="n">n</span><span class="err">个参数，具体操作是</span><span class="n">M</span><span class="o">-</span><span class="n">C</span><span class="o">-</span><span class="n">n</span> <span class="n">M</span><span class="o">-</span><span class="n">C</span><span class="o">-</span><span class="n">y</span><span class="err">。</span>
+<span class="n">yank</span><span class="o">-</span><span class="n">last</span><span class="o">-</span><span class="n">arg</span> <span class="p">(</span><span class="n">M</span><span class="o">-</span><span class="p">.,</span> <span class="n">M</span><span class="o">-</span><span class="n">_</span><span class="p">)</span> <span class="err">引用上次输入命令的最后一个参数。</span>
+</pre></div>
+
+
+<h2>扩展命令（重点）</h2>
+<p>虽然上面的的替换好用，但万一替换错了就麻烦了，所以最好把替换的命令转成最终的命令。bash默认支持几种扩展：</p>
+<div class="highlight"><pre><span class="n">shell</span><span class="o">-</span><span class="n">expand</span><span class="o">-</span><span class="n">line</span> <span class="p">(</span><span class="n">M</span><span class="o">-</span><span class="n">C</span><span class="o">-</span><span class="n">e</span><span class="p">)</span> <span class="err">扩展所有</span>
+<span class="n">history</span><span class="o">-</span><span class="n">expand</span><span class="o">-</span><span class="n">line</span> <span class="p">(</span><span class="n">M</span><span class="o">-^</span><span class="p">)</span> <span class="err">扩展历史，就是上面提到的</span>
+<span class="n">glob</span><span class="o">-</span><span class="n">expand</span><span class="o">-</span><span class="n">word</span> <span class="p">(</span><span class="n">C</span><span class="o">-</span><span class="n">x</span> <span class="o">*</span><span class="p">)</span> <span class="err">扩展</span><span class="o">*</span><span class="err">、</span><span class="o">?</span><span class="err">之类的</span>
+</pre></div>
+
+
+<p>更多信息，请参考<a href="https://www.gnu.org/savannah-checkouts/gnu/bash/manual/bash.html">Bash Reference Manual</a></p>
+<p>本文参考<a href="https://blog.balthazar-rouberol.com/shell-productivity-tips-and-tricks">Shell productivity tips and tricks</a>，可以点击链接前往原文查看更多tips and tricks。</p></div>
+    <footer>
+<p class="meta">
+  <span class="byline author vcard">
+    Posted by <span class="fn">
+        Yang Liping
+    </span>
+  </span>
+<time datetime="2020-04-27T09:35:58.251611+08:00" pubdate>Mon 27 April 2020</time>  <span class="categories">
+    <a class='category' href='http://www.yanglp.com/category/tech.html'>Tech</a>
+  </span>
+  <span class="categories">
+    <a class="category" href="http://www.yanglp.com/tag/bash.html">bash</a>,    <a class="category" href="http://www.yanglp.com/tag/linux.html">linux</a>  </span>
+</p><div class="sharing">
+</div>    </footer>
+  </article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript></div>
+  </section>
+</div>
+<aside class="sidebar">
+  <section>
+    <h1>Recent Posts</h1>
+    <ul id="recent_posts">
+      <li class="post">
+          <a href="http://www.yanglp.com/posts/2020/04/27/bashyin-yong-ming-ling-can-shu.html">bash引用命令参数</a>
+      </li>
+      <li class="post">
+          <a href="http://www.yanglp.com/posts/2020/04/25/python-import-sgeku-wen-jian.html">python import sge库文件</a>
+      </li>
+      <li class="post">
+          <a href="http://www.yanglp.com/posts/2019/12/18/mvclidao-zhi-da-liang-zfs-vdevbad_ashiftri-zhi.html">mvcli导致大量zfs vdev.bad_ashift日志</a>
+      </li>
+      <li class="post">
+          <a href="http://www.yanglp.com/posts/2014/04/16/dnsde-aliashe-anameji-lu.html">DNS的ALIAS和ANAME记录</a>
+      </li>
+      <li class="post">
+          <a href="http://www.yanglp.com/posts/2014/04/15/vim-0-fan-hui-dao-zui-chu-da-kai-wen-dang-de-zhuang-tai.html">VIM (0) - 返回到最初打开文档的状态</a>
+      </li>
+    </ul>
+  </section>
+  <section>
+      
+    <h1>Categories</h1>
+    <ul id="recent_posts">
+        <li><a href="http://www.yanglp.com/category/tech.html">Tech</a></li>
+    </ul>
+  </section>
+ 
+
+  <section>
+  <h1>Tags</h1>
+    <a href="http://www.yanglp.com/tag/python.html">python</a>,    <a href="http://www.yanglp.com/tag/vim.html">vim</a>,    <a href="http://www.yanglp.com/tag/zfs.html">zfs</a>,    <a href="http://www.yanglp.com/tag/dns.html">DNS</a>,    <a href="http://www.yanglp.com/tag/linux.html">linux</a>,    <a href="http://www.yanglp.com/tag/sge.html">sge</a>,    <a href="http://www.yanglp.com/tag/bash.html">bash</a>  </section>
+
+
+    <section>
+        <h1>Blogroll</h1>
+        <ul>
+            <li><a href="http://getpelican.com/" target="_blank">Pelican</a></li>
+            <li><a href="http://python.org/" target="_blank">Python.org</a></li>
+            <li><a href="http://jinja.pocoo.org/" target="_blank">Jinja2</a></li>
+        </ul>
+    </section>
+
+</aside>    </div>
+  </div>
+  <footer role="contentinfo"><p>
+    Copyright &copy;  2014&ndash;2020  Yang Liping &mdash;
+  <span class="credit">Powered by <a href="http://getpelican.com">Pelican</a></span>
+</p></footer>
+  <script src="http://www.yanglp.com/theme/js/modernizr-2.0.js"></script>
+  <script src="http://www.yanglp.com/theme/js/ender.js"></script>
+  <script src="http://www.yanglp.com/theme/js/octopress.js" type="text/javascript"></script>
+    <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-50095101-1']);
+    _gaq.push(['_trackPageview']);
+    (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-50095101-1');
+    ga('send', 'pageview');
+</script>
+  <script type="text/javascript">
+    var disqus_shortname = 'yanglp';
+    var disqus_identifier = '/posts/2020/04/27/bashyin-yong-ming-ling-can-shu.html';
+    var disqus_url = 'http://www.yanglp.com/posts/2020/04/27/bashyin-yong-ming-ling-can-shu.html';
+    var disqus_title = 'bash引用命令参数';
+    (function() {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = "//" + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+     })();
+  </script>
+</body>
+</html>

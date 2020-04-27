@@ -1,5 +1,80 @@
 <?xml version="1.0" encoding="utf-8"?>
-<feed xmlns="http://www.w3.org/2005/Atom"><title>Liping's Blog - Yang Liping</title><link href="http://www.yanglp.com/" rel="alternate"></link><link href="http://www.yanglp.com/feeds/yang-liping.atom.xml" rel="self"></link><id>http://www.yanglp.com/</id><updated>2020-04-25T15:30:46+08:00</updated><subtitle>翁曰：「無他，但手熟爾。」</subtitle><entry><title>python import sge库文件</title><link href="http://www.yanglp.com/posts/2020/04/25/python-import-sgeku-wen-jian.html" rel="alternate"></link><published>2020-04-25T15:30:46+08:00</published><updated>2020-04-25T15:30:46+08:00</updated><author><name>Yang Liping</name></author><id>tag:www.yanglp.com,2020-04-25:/posts/2020/04/25/python-import-sgeku-wen-jian.html</id><summary type="html">&lt;p&gt;在python编程过程中，有些时候由于重用代码或者性能之类的原因，需要直接调用c语言写的库文件。python支持Cython、swig、ctypes、cffi等不同方式来调用c的代码。下面以ctypes为例，介绍怎么在python中使用sge的库文件。&lt;/p&gt;
+<feed xmlns="http://www.w3.org/2005/Atom"><title>Liping's Blog - Yang Liping</title><link href="http://www.yanglp.com/" rel="alternate"></link><link href="http://www.yanglp.com/feeds/yang-liping.atom.xml" rel="self"></link><id>http://www.yanglp.com/</id><updated>2020-04-27T09:35:58+08:00</updated><subtitle>翁曰：「無他，但手熟爾。」</subtitle><entry><title>bash引用命令参数</title><link href="http://www.yanglp.com/posts/2020/04/27/bashyin-yong-ming-ling-can-shu.html" rel="alternate"></link><published>2020-04-27T09:35:58+08:00</published><updated>2020-04-27T09:35:58+08:00</updated><author><name>Yang Liping</name></author><id>tag:www.yanglp.com,2020-04-27:/posts/2020/04/27/bashyin-yong-ming-ling-can-shu.html</id><summary type="html">&lt;h2&gt;&lt;code&gt;!-n&lt;/code&gt;&lt;/h2&gt;
+&lt;p&gt;引用之前输入过的命令，比如&lt;code&gt;!-1&lt;/code&gt;代表上一个命令，&lt;code&gt;!-2&lt;/code&gt;代表上上个命令&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="err"&gt;$&lt;/span&gt; &lt;span class="n"&gt;echo&lt;/span&gt; &lt;span class="s"&gt;&amp;quot;hello world!&amp;quot;&lt;/span&gt;
+&lt;span class="n"&gt;hello&lt;/span&gt; &lt;span class="n"&gt;world&lt;/span&gt;&lt;span class="o"&gt;!&lt;/span&gt;
+&lt;span class="err"&gt;$&lt;/span&gt; &lt;span class="n"&gt;cd&lt;/span&gt;
+&lt;span class="err"&gt;$&lt;/span&gt; &lt;span class="o"&gt;!-&lt;/span&gt;&lt;span class="mi"&gt;2&lt;/span&gt;  &lt;span class="err"&gt;#&lt;/span&gt; &lt;span class="o"&gt;!-&lt;/span&gt;&lt;span class="mi"&gt;1&lt;/span&gt; &lt;span class="n"&gt;is&lt;/span&gt; &lt;span class="s"&gt;&amp;quot;cd&amp;quot;&lt;/span&gt; &lt;span class="n"&gt;and&lt;/span&gt; &lt;span class="o"&gt;!-&lt;/span&gt;&lt;span class="mi"&gt;2&lt;/span&gt; &lt;span class="n"&gt;is&lt;/span&gt; &lt;span class="err"&gt;&amp;#39;&lt;/span&gt;&lt;span class="n"&gt;echo&lt;/span&gt; &lt;span class="s"&gt;&amp;quot;hello world!&amp;quot;&lt;/span&gt;&lt;span class="err"&gt;&amp;#39;&lt;/span&gt;
+&lt;span class="err"&gt;$&lt;/span&gt; &lt;span class="n"&gt;echo&lt;/span&gt; &lt;span class="s"&gt;&amp;quot;hello world&amp;quot;&lt;/span&gt;
+&lt;span class="n"&gt;hello&lt;/span&gt; &lt;span class="n"&gt;world&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;&lt;code&gt;!!&lt;/code&gt; 等价于&lt;code&gt;!-1&lt;/code&gt;&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="err"&gt;$&lt;/span&gt; &lt;span class="n"&gt;echo&lt;/span&gt; &lt;span class="s"&gt;&amp;quot;hello world!&amp;quot;&lt;/span&gt;
+&lt;span class="n"&gt;hello&lt;/span&gt; &lt;span class="n"&gt;world&lt;/span&gt;&lt;span class="o"&gt;!&lt;/span&gt;
+&lt;span class="err"&gt;$&lt;/span&gt; &lt;span class="o"&gt;!!&lt;/span&gt;
+&lt;span class="err"&gt;$&lt;/span&gt; &lt;span class="n"&gt;echo&lt;/span&gt; &lt;span class="s"&gt;&amp;quot;hello world&amp;quot;&lt;/span&gt;
+&lt;span class="n"&gt;hello&lt;/span&gt; &lt;span class="n"&gt;world&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;&lt;code&gt;!!&lt;/code&gt; 在sudo的时候比较有用&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="err"&gt;$&lt;/span&gt; &lt;span class="n"&gt;vim&lt;/span&gt; &lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;etc&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;myfile&lt;/span&gt;
+&lt;span class="nl"&gt;vim:&lt;/span&gt; &lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;etc&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;myfile&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="n"&gt;Permission&lt;/span&gt; &lt;span class="n"&gt;denied&lt;/span&gt;
+&lt;span class="err"&gt;$&lt;/span&gt; &lt;span class="n"&gt;sudo …&lt;/span&gt;&lt;/pre&gt;&lt;/div&gt;</summary><content type="html">&lt;h2&gt;&lt;code&gt;!-n&lt;/code&gt;&lt;/h2&gt;
+&lt;p&gt;引用之前输入过的命令，比如&lt;code&gt;!-1&lt;/code&gt;代表上一个命令，&lt;code&gt;!-2&lt;/code&gt;代表上上个命令&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="err"&gt;$&lt;/span&gt; &lt;span class="n"&gt;echo&lt;/span&gt; &lt;span class="s"&gt;&amp;quot;hello world!&amp;quot;&lt;/span&gt;
+&lt;span class="n"&gt;hello&lt;/span&gt; &lt;span class="n"&gt;world&lt;/span&gt;&lt;span class="o"&gt;!&lt;/span&gt;
+&lt;span class="err"&gt;$&lt;/span&gt; &lt;span class="n"&gt;cd&lt;/span&gt;
+&lt;span class="err"&gt;$&lt;/span&gt; &lt;span class="o"&gt;!-&lt;/span&gt;&lt;span class="mi"&gt;2&lt;/span&gt;  &lt;span class="err"&gt;#&lt;/span&gt; &lt;span class="o"&gt;!-&lt;/span&gt;&lt;span class="mi"&gt;1&lt;/span&gt; &lt;span class="n"&gt;is&lt;/span&gt; &lt;span class="s"&gt;&amp;quot;cd&amp;quot;&lt;/span&gt; &lt;span class="n"&gt;and&lt;/span&gt; &lt;span class="o"&gt;!-&lt;/span&gt;&lt;span class="mi"&gt;2&lt;/span&gt; &lt;span class="n"&gt;is&lt;/span&gt; &lt;span class="err"&gt;&amp;#39;&lt;/span&gt;&lt;span class="n"&gt;echo&lt;/span&gt; &lt;span class="s"&gt;&amp;quot;hello world!&amp;quot;&lt;/span&gt;&lt;span class="err"&gt;&amp;#39;&lt;/span&gt;
+&lt;span class="err"&gt;$&lt;/span&gt; &lt;span class="n"&gt;echo&lt;/span&gt; &lt;span class="s"&gt;&amp;quot;hello world&amp;quot;&lt;/span&gt;
+&lt;span class="n"&gt;hello&lt;/span&gt; &lt;span class="n"&gt;world&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;&lt;code&gt;!!&lt;/code&gt; 等价于&lt;code&gt;!-1&lt;/code&gt;&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="err"&gt;$&lt;/span&gt; &lt;span class="n"&gt;echo&lt;/span&gt; &lt;span class="s"&gt;&amp;quot;hello world!&amp;quot;&lt;/span&gt;
+&lt;span class="n"&gt;hello&lt;/span&gt; &lt;span class="n"&gt;world&lt;/span&gt;&lt;span class="o"&gt;!&lt;/span&gt;
+&lt;span class="err"&gt;$&lt;/span&gt; &lt;span class="o"&gt;!!&lt;/span&gt;
+&lt;span class="err"&gt;$&lt;/span&gt; &lt;span class="n"&gt;echo&lt;/span&gt; &lt;span class="s"&gt;&amp;quot;hello world&amp;quot;&lt;/span&gt;
+&lt;span class="n"&gt;hello&lt;/span&gt; &lt;span class="n"&gt;world&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;&lt;code&gt;!!&lt;/code&gt; 在sudo的时候比较有用&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="err"&gt;$&lt;/span&gt; &lt;span class="n"&gt;vim&lt;/span&gt; &lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;etc&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;myfile&lt;/span&gt;
+&lt;span class="nl"&gt;vim:&lt;/span&gt; &lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;etc&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;myfile&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="n"&gt;Permission&lt;/span&gt; &lt;span class="n"&gt;denied&lt;/span&gt;
+&lt;span class="err"&gt;$&lt;/span&gt; &lt;span class="n"&gt;sudo&lt;/span&gt; &lt;span class="o"&gt;!!&lt;/span&gt;
+&lt;span class="err"&gt;$&lt;/span&gt; &lt;span class="n"&gt;sudo&lt;/span&gt; &lt;span class="n"&gt;vim&lt;/span&gt; &lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;etc&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;myfile&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;h2&gt;引用之前输入过的命令的参数&lt;/h2&gt;
+&lt;p&gt;&lt;code&gt;!^&lt;/code&gt; 代表上次输入命令的第一个参数，&lt;code&gt;!$&lt;/code&gt; 代表上次输入命令的最后一个参数，&lt;code&gt;!!:n&lt;/code&gt; 代表上次输入命令的第n个参数&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="err"&gt;$&lt;/span&gt; &lt;span class="n"&gt;touch&lt;/span&gt; &lt;span class="n"&gt;first&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;txt&lt;/span&gt; &lt;span class="n"&gt;second&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;txt&lt;/span&gt; &lt;span class="n"&gt;last&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;txt&lt;/span&gt;
+&lt;span class="err"&gt;$&lt;/span&gt; &lt;span class="n"&gt;vim&lt;/span&gt; &lt;span class="o"&gt;!!:&lt;/span&gt;&lt;span class="mi"&gt;2&lt;/span&gt;
+&lt;span class="err"&gt;$&lt;/span&gt; &lt;span class="n"&gt;vim&lt;/span&gt; &lt;span class="n"&gt;second&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;txt&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;当然，如上面介绍，&lt;code&gt;!!&lt;/code&gt; 可以换成 &lt;code&gt;!-n&lt;/code&gt; 代表上几个命令。&lt;/p&gt;
+&lt;p&gt;如果是引用上次输入命令的参数，还有一种快捷键方式&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="n"&gt;yank&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;nth&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;arg&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;M&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;C&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;y&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="err"&gt;引用上次输入命令的第&lt;/span&gt;&lt;span class="n"&gt;n&lt;/span&gt;&lt;span class="err"&gt;个参数，具体操作是&lt;/span&gt;&lt;span class="n"&gt;M&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;C&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;n&lt;/span&gt; &lt;span class="n"&gt;M&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;C&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;y&lt;/span&gt;&lt;span class="err"&gt;。&lt;/span&gt;
+&lt;span class="n"&gt;yank&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;last&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;arg&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;M&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="p"&gt;.,&lt;/span&gt; &lt;span class="n"&gt;M&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;_&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="err"&gt;引用上次输入命令的最后一个参数。&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;h2&gt;扩展命令（重点）&lt;/h2&gt;
+&lt;p&gt;虽然上面的的替换好用，但万一替换错了就麻烦了，所以最好把替换的命令转成最终的命令。bash默认支持几种扩展：&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="n"&gt;shell&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;expand&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;line&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;M&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;C&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;e&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="err"&gt;扩展所有&lt;/span&gt;
+&lt;span class="n"&gt;history&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;expand&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;line&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;M&lt;/span&gt;&lt;span class="o"&gt;-^&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="err"&gt;扩展历史，就是上面提到的&lt;/span&gt;
+&lt;span class="n"&gt;glob&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;expand&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;word&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;C&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;x&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="err"&gt;扩展&lt;/span&gt;&lt;span class="o"&gt;*&lt;/span&gt;&lt;span class="err"&gt;、&lt;/span&gt;&lt;span class="o"&gt;?&lt;/span&gt;&lt;span class="err"&gt;之类的&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;更多信息，请参考&lt;a href="https://www.gnu.org/savannah-checkouts/gnu/bash/manual/bash.html"&gt;Bash Reference Manual&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;本文参考&lt;a href="https://blog.balthazar-rouberol.com/shell-productivity-tips-and-tricks"&gt;Shell productivity tips and tricks&lt;/a&gt;，可以点击链接前往原文查看更多tips and tricks。&lt;/p&gt;</content><category term="Tech"></category><category term="bash"></category><category term="linux"></category></entry><entry><title>python import sge库文件</title><link href="http://www.yanglp.com/posts/2020/04/25/python-import-sgeku-wen-jian.html" rel="alternate"></link><published>2020-04-25T15:30:46+08:00</published><updated>2020-04-25T15:30:46+08:00</updated><author><name>Yang Liping</name></author><id>tag:www.yanglp.com,2020-04-25:/posts/2020/04/25/python-import-sgeku-wen-jian.html</id><summary type="html">&lt;p&gt;在python编程过程中，有些时候由于重用代码或者性能之类的原因，需要直接调用c语言写的库文件。python支持Cython、swig、ctypes、cffi等不同方式来调用c的代码。下面以ctypes为例，介绍怎么在python中使用sge的库文件。&lt;/p&gt;
 &lt;p&gt;下载最新的Son of Grid Engine，链接https://gitlab.com/loveshack/sge (&lt;em&gt;注：本文档以9baeb84cdc883c4ba8b38cfc89ab8262e6d4e1d9这个commit的版本为例&lt;/em&gt;)&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="c"&gt;# tar zxf sge-master.tar.gz&lt;/span&gt;
 &lt;span class="c"&gt;# cd sge-master/source&lt;/span&gt;

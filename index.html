@@ -52,6 +52,43 @@
   		<article>
 <header>
       <h1 class="entry-title">
+        <a href="http://www.yanglp.com/posts/2020/04/27/bashyin-yong-ming-ling-can-shu.html">bash引用命令参数</a>
+      </h1>
+    <p class="meta">
+<time datetime="2020-04-27T09:35:58.251611+08:00" pubdate>Mon 27 April 2020</time>    </p>
+</header>
+
+  <div class="entry-content"><h2><code>!-n</code></h2>
+<p>引用之前输入过的命令，比如<code>!-1</code>代表上一个命令，<code>!-2</code>代表上上个命令</p>
+<div class="highlight"><pre><span class="err">$</span> <span class="n">echo</span> <span class="s">&quot;hello world!&quot;</span>
+<span class="n">hello</span> <span class="n">world</span><span class="o">!</span>
+<span class="err">$</span> <span class="n">cd</span>
+<span class="err">$</span> <span class="o">!-</span><span class="mi">2</span>  <span class="err">#</span> <span class="o">!-</span><span class="mi">1</span> <span class="n">is</span> <span class="s">&quot;cd&quot;</span> <span class="n">and</span> <span class="o">!-</span><span class="mi">2</span> <span class="n">is</span> <span class="err">&#39;</span><span class="n">echo</span> <span class="s">&quot;hello world!&quot;</span><span class="err">&#39;</span>
+<span class="err">$</span> <span class="n">echo</span> <span class="s">&quot;hello world&quot;</span>
+<span class="n">hello</span> <span class="n">world</span>
+</pre></div>
+
+
+<p><code>!!</code> 等价于<code>!-1</code></p>
+<div class="highlight"><pre><span class="err">$</span> <span class="n">echo</span> <span class="s">&quot;hello world!&quot;</span>
+<span class="n">hello</span> <span class="n">world</span><span class="o">!</span>
+<span class="err">$</span> <span class="o">!!</span>
+<span class="err">$</span> <span class="n">echo</span> <span class="s">&quot;hello world&quot;</span>
+<span class="n">hello</span> <span class="n">world</span>
+</pre></div>
+
+
+<p><code>!!</code> 在sudo的时候比较有用</p>
+<div class="highlight"><pre><span class="err">$</span> <span class="n">vim</span> <span class="o">/</span><span class="n">etc</span><span class="o">/</span><span class="n">myfile</span>
+<span class="nl">vim:</span> <span class="o">/</span><span class="n">etc</span><span class="o">/</span><span class="n">myfile</span><span class="o">:</span> <span class="n">Permission</span> <span class="n">denied</span>
+<span class="err">$</span> <span class="n">sudo …</span></pre></div></div>
+  <footer>
+    <a rel="full-article" href="http://www.yanglp.com/posts/2020/04/27/bashyin-yong-ming-ling-can-shu.html">Read On &crarr;</a>
+  </footer>
+  		</article>
+  		<article>
+<header>
+      <h1 class="entry-title">
         <a href="http://www.yanglp.com/posts/2020/04/25/python-import-sgeku-wen-jian.html">python import sge库文件</a>
       </h1>
     <p class="meta">
@@ -142,6 +179,9 @@
     <h1>Recent Posts</h1>
     <ul id="recent_posts">
       <li class="post">
+          <a href="http://www.yanglp.com/posts/2020/04/27/bashyin-yong-ming-ling-can-shu.html">bash引用命令参数</a>
+      </li>
+      <li class="post">
           <a href="http://www.yanglp.com/posts/2020/04/25/python-import-sgeku-wen-jian.html">python import sge库文件</a>
       </li>
       <li class="post">
@@ -166,7 +206,7 @@
 
   <section>
   <h1>Tags</h1>
-    <a href="http://www.yanglp.com/tag/python.html">python</a>,    <a href="http://www.yanglp.com/tag/zfs.html">zfs</a>,    <a href="http://www.yanglp.com/tag/sge.html">sge</a>,    <a href="http://www.yanglp.com/tag/dns.html">DNS</a>,    <a href="http://www.yanglp.com/tag/vim.html">vim</a>  </section>
+    <a href="http://www.yanglp.com/tag/python.html">python</a>,    <a href="http://www.yanglp.com/tag/vim.html">vim</a>,    <a href="http://www.yanglp.com/tag/zfs.html">zfs</a>,    <a href="http://www.yanglp.com/tag/dns.html">DNS</a>,    <a href="http://www.yanglp.com/tag/linux.html">linux</a>,    <a href="http://www.yanglp.com/tag/sge.html">sge</a>,    <a href="http://www.yanglp.com/tag/bash.html">bash</a>  </section>
 
 
     <section>
