@@ -52,6 +52,40 @@
   		<article>
 <header>
       <h1 class="entry-title">
+        <a href="http://www.yanglp.com/posts/2020/05/08/yong-gdb-deubg-bashshu-chu-bu-zheng-chang-wen-ti.html">用gdb deubg bash输出不正常问题</a>
+      </h1>
+    <p class="meta">
+<time datetime="2020-05-08T16:24:53.081225+08:00" pubdate>Fri 08 May 2020</time>    </p>
+</header>
+
+  <div class="entry-content"><p><strong>TL;DR</strong> bash参数扩展导致命令输出跟预期结果不一致。</p>
+<h2>问题描述</h2>
+<p>用户反馈<code>echo</code>或者<code>printf</code>命令如下，当有1或者g的时候，只会输出1或/和g，没有其他数据，怀疑系统有问题。</p>
+<div class="highlight"><pre><span class="err">$</span> <span class="n">printf</span> <span class="p">[</span><span class="mi">3</span><span class="n">jnrw</span><span class="o">:</span><span class="n">mvlewgtf09u23434e12ermld234r25cscfw</span><span class="p">]</span>
+<span class="mi">1</span>
+
+<span class="err">$</span> <span class="n">echo</span> <span class="p">[</span><span class="mi">3</span><span class="n">jnrw</span><span class="o">:</span><span class="n">mvlewgtf09u23434e12ermld234r25cscfw</span><span class="p">]</span>
+<span class="mi">1</span> <span class="n">g</span>
+
+<span class="err">$</span> <span class="n">echo</span> <span class="p">[</span><span class="n">adfaasdljfalsjljajzpqwekzv</span><span class="p">]</span>
+<span class="p">[</span><span class="n">adfaasdljfalsjljajzpqwekzv</span><span class="p">]</span>
+
+<span class="err">$</span> <span class="n">uname</span> <span class="o">-</span><span class="n">r</span>
+<span class="mf">2.6.32</span><span class="o">-</span><span class="mf">504.16.2</span><span class="p">.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span>
+</pre></div>
+
+
+<h2>问题分析</h2>
+<p>使用<code>strace</code>命令去跟踪，发现bash在执行execve系统调用的时候，传递给echo的就是只有1和g。问题应该在bash。</p>
+<div class="highlight"><pre><span class="cp"># strace -f echo [aaag1bbb]</span>
+<span class="n">execve …</span></pre></div></div>
+  <footer>
+    <a rel="full-article" href="http://www.yanglp.com/posts/2020/05/08/yong-gdb-deubg-bashshu-chu-bu-zheng-chang-wen-ti.html">Read On &crarr;</a>
+  </footer>
+  		</article>
+  		<article>
+<header>
+      <h1 class="entry-title">
         <a href="http://www.yanglp.com/posts/2020/04/27/bashyin-yong-ming-ling-can-shu.html">bash引用命令参数</a>
       </h1>
     <p class="meta">
@@ -179,6 +213,9 @@
     <h1>Recent Posts</h1>
     <ul id="recent_posts">
       <li class="post">
+          <a href="http://www.yanglp.com/posts/2020/05/08/yong-gdb-deubg-bashshu-chu-bu-zheng-chang-wen-ti.html">用gdb deubg bash输出不正常问题</a>
+      </li>
+      <li class="post">
           <a href="http://www.yanglp.com/posts/2020/04/27/bashyin-yong-ming-ling-can-shu.html">bash引用命令参数</a>
       </li>
       <li class="post">
@@ -189,9 +226,6 @@
       </li>
       <li class="post">
           <a href="http://www.yanglp.com/posts/2014/04/16/dnsde-aliashe-anameji-lu.html">DNS的ALIAS和ANAME记录</a>
-      </li>
-      <li class="post">
-          <a href="http://www.yanglp.com/posts/2014/04/15/vim-0-fan-hui-dao-zui-chu-da-kai-wen-dang-de-zhuang-tai.html">VIM (0) - 返回到最初打开文档的状态</a>
       </li>
     </ul>
   </section>
@@ -206,7 +240,7 @@
 
   <section>
   <h1>Tags</h1>
-    <a href="http://www.yanglp.com/tag/python.html">python</a>,    <a href="http://www.yanglp.com/tag/vim.html">vim</a>,    <a href="http://www.yanglp.com/tag/zfs.html">zfs</a>,    <a href="http://www.yanglp.com/tag/dns.html">DNS</a>,    <a href="http://www.yanglp.com/tag/linux.html">linux</a>,    <a href="http://www.yanglp.com/tag/sge.html">sge</a>,    <a href="http://www.yanglp.com/tag/bash.html">bash</a>  </section>
+    <a href="http://www.yanglp.com/tag/python.html">python</a>,    <a href="http://www.yanglp.com/tag/vim.html">vim</a>,    <a href="http://www.yanglp.com/tag/zfs.html">zfs</a>,    <a href="http://www.yanglp.com/tag/gdb.html">gdb</a>,    <a href="http://www.yanglp.com/tag/dns.html">DNS</a>,    <a href="http://www.yanglp.com/tag/linux.html">linux</a>,    <a href="http://www.yanglp.com/tag/sge.html">sge</a>,    <a href="http://www.yanglp.com/tag/bash.html">bash</a>  </section>
 
 
     <section>

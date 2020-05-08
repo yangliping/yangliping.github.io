@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>用gdb deubg bash输出不正常问题 &mdash; Liping's Blog</title>
+  <meta name="author" content="Yang Liping">
+
+
+
+
+
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+
+    <link href="http://www.yanglp.com/favicon.png" rel="icon">
+
+  <link href="http://www.yanglp.com/theme/css/main.css" media="screen, projection"
+        rel="stylesheet" type="text/css">
+
+  <link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic"
+        rel="stylesheet" type="text/css">
+  <link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic"
+        rel="stylesheet" type="text/css">
+</head>
+
+<body>
+  <header role="banner"><hgroup>
+  <h1><a href="http://www.yanglp.com/">Liping's Blog</a></h1>
+    <h2>翁曰：「無他，但手熟爾。」</h2>
+</hgroup></header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+</ul>
+
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="sitesearch" value="www.yanglp.com">
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+
+<ul class="main-navigation">
+    <li><a href="/">Home</a></li>
+    <li><a href="/archives">Arcives</a></li>
+</ul></nav>
+  <div id="main">
+    <div id="content">
+<div>
+  <article class="hentry" role="article">
+<header>
+      <h1 class="entry-title">用gdb deubg bash输出不正常问题</h1>
+    <p class="meta">
+<time datetime="2020-05-08T16:24:53.081225+08:00" pubdate>Fri 08 May 2020</time>    </p>
+</header>
+
+  <div class="entry-content"><p><strong>TL;DR</strong> bash参数扩展导致命令输出跟预期结果不一致。</p>
+<h2>问题描述</h2>
+<p>用户反馈<code>echo</code>或者<code>printf</code>命令如下，当有1或者g的时候，只会输出1或/和g，没有其他数据，怀疑系统有问题。</p>
+<div class="highlight"><pre><span class="err">$</span> <span class="n">printf</span> <span class="p">[</span><span class="mi">3</span><span class="n">jnrw</span><span class="o">:</span><span class="n">mvlewgtf09u23434e12ermld234r25cscfw</span><span class="p">]</span>
+<span class="mi">1</span>
+
+<span class="err">$</span> <span class="n">echo</span> <span class="p">[</span><span class="mi">3</span><span class="n">jnrw</span><span class="o">:</span><span class="n">mvlewgtf09u23434e12ermld234r25cscfw</span><span class="p">]</span>
+<span class="mi">1</span> <span class="n">g</span>
+
+<span class="err">$</span> <span class="n">echo</span> <span class="p">[</span><span class="n">adfaasdljfalsjljajzpqwekzv</span><span class="p">]</span>
+<span class="p">[</span><span class="n">adfaasdljfalsjljajzpqwekzv</span><span class="p">]</span>
+
+<span class="err">$</span> <span class="n">uname</span> <span class="o">-</span><span class="n">r</span>
+<span class="mf">2.6.32</span><span class="o">-</span><span class="mf">504.16.2</span><span class="p">.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span>
+</pre></div>
+
+
+<h2>问题分析</h2>
+<p>使用<code>strace</code>命令去跟踪，发现bash在执行execve系统调用的时候，传递给echo的就是只有1和g。问题应该在bash。</p>
+<div class="highlight"><pre><span class="cp"># strace -f echo [aaag1bbb]</span>
+<span class="n">execve</span><span class="p">(</span><span class="s">&quot;/bin/echo&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s">&quot;echo&quot;</span><span class="p">,</span> <span class="s">&quot;1&quot;</span><span class="p">,</span> <span class="s">&quot;g&quot;</span><span class="p">],</span> <span class="p">[</span><span class="cm">/* 53 vars */</span><span class="p">])</span> <span class="o">=</span> <span class="mi">0</span>
+</pre></div>
+
+
+<p>接下来用gdb来分析bash的行为。由于只知道bash在执行execve的时候，传递给echo命令的参数不对，所以只设置捕获execve系统调用。</p>
+<div class="highlight"><pre><span class="cp"># gdb --args /bin/bash -c &#39;/bin/echo [g1]&#39;</span>
+
+<span class="p">(</span><span class="n">gdb</span><span class="p">)</span> <span class="n">catch</span> <span class="n">syscall</span> <span class="n">execve</span>
+<span class="n">Catchpoint</span> <span class="mi">1</span> <span class="p">(</span><span class="n">syscall</span> <span class="err">&#39;</span><span class="n">execve</span><span class="err">&#39;</span> <span class="p">[</span><span class="mi">59</span><span class="p">])</span>
+</pre></div>
+
+
+<p>运行程序，查看断点的backtrace信息</p>
+<div class="highlight"><pre><span class="p">(</span><span class="n">gdb</span><span class="p">)</span> <span class="n">r</span>
+<span class="n">Starting</span> <span class="n">program</span><span class="o">:</span> <span class="o">/</span><span class="n">bin</span><span class="o">/</span><span class="n">bash</span> <span class="o">-</span><span class="n">c</span> <span class="o">/</span><span class="n">bin</span><span class="o">/</span><span class="n">echo</span><span class="err">\</span> <span class="err">\</span><span class="p">[</span><span class="n">g1</span><span class="err">\</span><span class="p">]</span>
+
+<span class="n">Catchpoint</span> <span class="mi">1</span> <span class="p">(</span><span class="n">call</span> <span class="n">to</span> <span class="n">syscall</span> <span class="err">&#39;</span><span class="n">execve</span><span class="err">&#39;</span><span class="p">),</span> <span class="mh">0x0000003047ebdb37</span> <span class="n">in</span> <span class="n">execve</span> <span class="p">()</span> <span class="n">from</span> <span class="o">/</span><span class="n">lib64</span><span class="o">/</span><span class="n">libc</span><span class="p">.</span><span class="n">so</span><span class="mf">.6</span>
+<span class="n">Missing</span> <span class="n">separate</span> <span class="n">debuginfos</span><span class="p">,</span> <span class="n">use</span><span class="o">:</span> <span class="n">debuginfo</span><span class="o">-</span><span class="n">install</span> <span class="n">ncurses</span><span class="o">-</span><span class="n">libs</span><span class="o">-</span><span class="mf">5.7</span><span class="o">-</span><span class="mf">4.20090207</span><span class="p">.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span>
+
+<span class="p">(</span><span class="n">gdb</span><span class="p">)</span> <span class="n">bt</span>
+<span class="cp">#0  0x0000003047ebdb37 in execve () from /lib64/libc.so.6</span>
+<span class="cp">#1  0x000000000042e156 in shell_execve (command=0x8ee0e0 &quot;/bin/echo&quot;, args=0x8eed00, env=0x8ee9e0) at execute_cmd.c:4816</span>
+<span class="cp">#2  0x000000000042fade in execute_disk_command (simple_command=&lt;value optimized out&gt;, pipe_in=-1, pipe_out=-1, async=&lt;value optimized out&gt;,</span>
+    <span class="n">fds_to_close</span><span class="o">=&lt;</span><span class="n">value</span> <span class="n">optimized</span> <span class="n">out</span><span class="o">&gt;</span><span class="p">)</span> <span class="n">at</span> <span class="n">execute_cmd</span><span class="p">.</span><span class="n">c</span><span class="o">:</span><span class="mi">4616</span>
+<span class="cp">#3  execute_simple_command (simple_command=&lt;value optimized out&gt;, pipe_in=-1, pipe_out=-1, async=&lt;value optimized out&gt;, fds_to_close=&lt;value optimized out&gt;)</span>
+    <span class="n">at</span> <span class="n">execute_cmd</span><span class="p">.</span><span class="n">c</span><span class="o">:</span><span class="mi">3863</span>
+<span class="cp">#4  0x0000000000430463 in execute_command_internal (command=0x8ee6f0, asynchronous=&lt;value optimized out&gt;, pipe_in=-1, pipe_out=-1, fds_to_close=0x8ee740)</span>
+    <span class="n">at</span> <span class="n">execute_cmd</span><span class="p">.</span><span class="n">c</span><span class="o">:</span><span class="mi">741</span>
+<span class="cp">#5  0x000000000046b86b in parse_and_execute (string=&lt;value optimized out&gt;, from_file=0x4a0fb8 &quot;-c&quot;, flags=&lt;value optimized out&gt;) at evalstring.c:339</span>
+<span class="cp">#6  0x000000000041bada in run_one_command (command=0x7fffffffdfef &quot;/bin/echo [g1]&quot;) at shell.c:1325</span>
+<span class="cp">#7  0x000000000041cbab in main (argc=&lt;value optimized out&gt;, argv=0x7fffffffdcb8, env=0x7fffffffdcd8) at shell.c:698</span>
+</pre></div>
+
+
+<p>先看frame 1的信息，发现<code>shell_execve()</code>函数的参数args是有问题的。不应该是<code>1</code>和<code>g</code>，而应该是<code>[g1]</code>。</p>
+<div class="highlight"><pre><span class="p">(</span><span class="n">gdb</span><span class="p">)</span> <span class="n">frame</span> <span class="mi">1</span>
+<span class="cp">#1  0x000000000042e156 in shell_execve (command=0x8ee0e0 &quot;/bin/echo&quot;, args=0x8eed00, env=0x8ee9e0) at execute_cmd.c:4816</span>
+<span class="mi">4816</span>      <span class="n">execve</span> <span class="p">(</span><span class="n">command</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">env</span><span class="p">);</span>
+
+<span class="p">(</span><span class="n">gdb</span><span class="p">)</span> <span class="n">list</span> <span class="n">execute_cmd</span><span class="p">.</span><span class="n">c</span><span class="o">:</span><span class="mi">4816</span>
+<span class="mi">4811</span>      <span class="kt">int</span> <span class="n">larray</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">fd</span><span class="p">;</span>
+<span class="mi">4812</span>      <span class="kt">char</span> <span class="n">sample</span><span class="p">[</span><span class="mi">80</span><span class="p">];</span>
+<span class="mi">4813</span>      <span class="kt">int</span> <span class="n">sample_len</span><span class="p">;</span>
+<span class="mi">4814</span>
+<span class="mi">4815</span>      <span class="nf">SETOSTYPE</span> <span class="p">(</span><span class="mi">0</span><span class="p">);</span>                <span class="cm">/* Some systems use for USG/POSIX semantics */</span>
+<span class="mi">4816</span>      <span class="nf">execve</span> <span class="p">(</span><span class="n">command</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">env</span><span class="p">);</span>
+<span class="mi">4817</span>      <span class="n">i</span> <span class="o">=</span> <span class="n">errno</span><span class="p">;</span>                    <span class="cm">/* error from execve() */</span>
+<span class="mi">4818</span>      <span class="n">CHECK_TERMSIG</span><span class="p">;</span>
+<span class="mi">4819</span>      <span class="nf">SETOSTYPE</span> <span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+<span class="mi">4820</span>
+
+<span class="p">(</span><span class="n">gdb</span><span class="p">)</span> <span class="n">set</span> <span class="n">listsize</span> <span class="mi">20</span>
+
+<span class="p">(</span><span class="n">gdb</span><span class="p">)</span> <span class="n">list</span> <span class="n">execute_cmd</span><span class="p">.</span><span class="n">c</span><span class="o">:</span><span class="mi">4816</span>
+<span class="mi">4806</span>    <span class="kt">int</span>
+<span class="mi">4807</span>    <span class="n">shell_execve</span> <span class="p">(</span><span class="n">command</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">env</span><span class="p">)</span>
+<span class="mi">4808</span>         <span class="kt">char</span> <span class="o">*</span><span class="n">command</span><span class="p">;</span>
+<span class="mi">4809</span>         <span class="kt">char</span> <span class="o">**</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">env</span><span class="p">;</span>
+<span class="mi">4810</span>    <span class="p">{</span>
+<span class="mi">4811</span>      <span class="kt">int</span> <span class="n">larray</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">fd</span><span class="p">;</span>
+<span class="mi">4812</span>      <span class="kt">char</span> <span class="n">sample</span><span class="p">[</span><span class="mi">80</span><span class="p">];</span>
+<span class="mi">4813</span>      <span class="kt">int</span> <span class="n">sample_len</span><span class="p">;</span>
+<span class="mi">4814</span>
+<span class="mi">4815</span>      <span class="nf">SETOSTYPE</span> <span class="p">(</span><span class="mi">0</span><span class="p">);</span>                <span class="cm">/* Some systems use for USG/POSIX semantics */</span>
+<span class="mi">4816</span>      <span class="nf">execve</span> <span class="p">(</span><span class="n">command</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">env</span><span class="p">);</span>
+<span class="mi">4817</span>      <span class="n">i</span> <span class="o">=</span> <span class="n">errno</span><span class="p">;</span>                    <span class="cm">/* error from execve() */</span>
+<span class="mi">4818</span>      <span class="n">CHECK_TERMSIG</span><span class="p">;</span>
+<span class="mi">4819</span>      <span class="nf">SETOSTYPE</span> <span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+<span class="mi">4820</span>
+<span class="mi">4821</span>      <span class="cm">/* If we get to this point, then start checking out the file.</span>
+<span class="cm">4822         Maybe it is something we can hack ourselves. */</span>
+<span class="mi">4823</span>      <span class="k">if</span> <span class="p">(</span><span class="n">i</span> <span class="o">!=</span> <span class="n">ENOEXEC</span><span class="p">)</span>
+<span class="mi">4824</span>        <span class="p">{</span>
+<span class="mi">4825</span>          <span class="k">if</span> <span class="p">(</span><span class="n">file_isdir</span> <span class="p">(</span><span class="n">command</span><span class="p">))</span>
+
+<span class="p">(</span><span class="n">gdb</span><span class="p">)</span> <span class="n">p</span> <span class="n">args</span>
+<span class="err">$</span><span class="mi">2</span> <span class="o">=</span> <span class="p">(</span><span class="kt">char</span> <span class="o">**</span><span class="p">)</span> <span class="mh">0x8eed00</span>
+
+<span class="p">(</span><span class="n">gdb</span><span class="p">)</span> <span class="n">p</span> <span class="o">*</span><span class="n">args</span>
+<span class="err">$</span><span class="mi">3</span> <span class="o">=</span> <span class="mh">0x8ee880</span> <span class="s">&quot;/bin/echo&quot;</span>
+
+<span class="p">(</span><span class="n">gdb</span><span class="p">)</span> <span class="n">p</span> <span class="o">*</span><span class="n">args</span><span class="err">@</span><span class="mi">4</span>
+<span class="err">$</span><span class="mi">8</span> <span class="o">=</span> <span class="p">{</span><span class="mh">0x8ee880</span> <span class="s">&quot;/bin/echo&quot;</span><span class="p">,</span> <span class="mh">0x8ee940</span> <span class="s">&quot;1&quot;</span><span class="p">,</span> <span class="mh">0x8ee100</span> <span class="s">&quot;g&quot;</span><span class="p">,</span> <span class="mh">0x0</span><span class="p">}</span>
+</pre></div>
+
+
+<p>再往上看frame 2，传递的args参数被<a href="https://stackoverflow.com/questions/5497855/what-does-value-optimized-out-mean-in-gdb">optimized out</a>了，看不了。但可以看到args是由words来构成的，而words在这里是有问题的。</p>
+<div class="highlight"><pre><span class="p">(</span><span class="nx">gdb</span><span class="p">)</span> <span class="nx">frame</span> <span class="mi">2</span>
+<span class="err">#</span><span class="mi">2</span>  <span class="mh">0x000000000042fade</span> <span class="k">in</span> <span class="nx">execute_disk_command</span> <span class="p">(</span><span class="nx">simple_command</span><span class="o">=&lt;</span><span class="nx">value</span> <span class="nx">optimized</span> <span class="nx">out</span><span class="o">&gt;</span><span class="p">,</span> <span class="nx">pipe_in</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="nx">pipe_out</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="nx">async</span><span class="o">=&lt;</span><span class="nx">value</span> <span class="nx">optimized</span> <span class="nx">out</span><span class="o">&gt;</span><span class="p">,</span>
+    <span class="nx">fds_to_close</span><span class="o">=&lt;</span><span class="nx">value</span> <span class="nx">optimized</span> <span class="nx">out</span><span class="o">&gt;</span><span class="p">)</span> <span class="nx">at</span> <span class="nx">execute_cmd</span><span class="p">.</span><span class="nx">c</span><span class="o">:</span><span class="mi">4616</span>
+<span class="mi">4616</span>          <span class="nx">exit</span> <span class="p">(</span><span class="nx">shell_execve</span> <span class="p">(</span><span class="nx">command</span><span class="p">,</span> <span class="nx">args</span><span class="p">,</span> <span class="nx">export_env</span><span class="p">));</span>
+
+<span class="p">(</span><span class="nx">gdb</span><span class="p">)</span> <span class="nx">p</span> <span class="nx">args</span>
+<span class="nx">$11</span> <span class="o">=</span> <span class="o">&lt;</span><span class="nx">value</span> <span class="nx">optimized</span> <span class="nx">out</span><span class="o">&gt;</span>
+
+<span class="p">(</span><span class="nx">gdb</span><span class="p">)</span> <span class="nx">list</span> <span class="nx">execute_cmd</span><span class="p">.</span><span class="nx">c</span><span class="o">:</span><span class="mi">4616</span>
+<span class="mi">4606</span>                <span class="p">}</span>
+<span class="mi">4607</span>
+<span class="mi">4608</span>              <span class="nx">wl</span> <span class="o">=</span> <span class="nx">make_word_list</span> <span class="p">(</span><span class="nx">make_word</span> <span class="p">(</span><span class="nx">NOTFOUND_HOOK</span><span class="p">),</span> <span class="nx">words</span><span class="p">);</span>
+<span class="mi">4609</span>              <span class="nx">exit</span> <span class="p">(</span><span class="nx">execute_shell_function</span> <span class="p">(</span><span class="nx">hookf</span><span class="p">,</span> <span class="nx">wl</span><span class="p">));</span>
+<span class="mi">4610</span>            <span class="p">}</span>
+<span class="mi">4611</span>
+<span class="mi">4612</span>          <span class="cm">/* Execve expects the command name to be in args</span><span class="cp">[</span><span class="mi">0</span><span class="cp">]</span><span class="cm">.  So we</span>
+<span class="cm">4613             leave it there, in the same format that the user used to</span>
+<span class="cm">4614             type it in. */</span>
+<span class="mi">4615</span>          <span class="nx">args</span> <span class="o">=</span> <span class="nx">strvec_from_word_list</span> <span class="p">(</span><span class="nx">words</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="p">(</span><span class="kr">int</span> <span class="o">*</span><span class="p">)</span><span class="nx">NULL</span><span class="p">);</span>
+<span class="mi">4616</span>          <span class="nx">exit</span> <span class="p">(</span><span class="nx">shell_execve</span> <span class="p">(</span><span class="nx">command</span><span class="p">,</span> <span class="nx">args</span><span class="p">,</span> <span class="nx">export_env</span><span class="p">));</span>
+<span class="mi">4617</span>        <span class="p">}</span>
+<span class="mi">4618</span>      <span class="k">else</span>
+<span class="mi">4619</span>        <span class="p">{</span>
+<span class="mi">4620</span>    <span class="nx">parent_return</span><span class="o">:</span>
+<span class="mi">4621</span>          <span class="cm">/* Make sure that the pipes are closed in the parent. */</span>
+<span class="mi">4622</span>          <span class="nx">close_pipes</span> <span class="p">(</span><span class="nx">pipe_in</span><span class="p">,</span> <span class="nx">pipe_out</span><span class="p">);</span>
+<span class="mi">4623</span>    <span class="err">#</span><span class="k">if</span> <span class="nx">defined</span> <span class="p">(</span><span class="nx">PROCESS_SUBSTITUTION</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="nx">defined</span> <span class="p">(</span><span class="nx">HAVE_DEV_FD</span><span class="p">)</span>
+<span class="mi">4624</span>          <span class="k">if</span> <span class="p">(</span><span class="nx">variable_context</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+<span class="mi">4625</span>            <span class="nx">unlink_fifo_list</span> <span class="p">();</span>
+
+<span class="p">(</span><span class="nx">gdb</span><span class="p">)</span> <span class="nx">p</span> <span class="nx">words</span>
+<span class="nx">$25</span> <span class="o">=</span> <span class="p">(</span><span class="nx">WORD_LIST</span> <span class="o">*</span><span class="p">)</span> <span class="mh">0x8ee960</span>
+
+<span class="p">(</span><span class="nx">gdb</span><span class="p">)</span> <span class="nx">p</span> <span class="o">*</span><span class="nx">words</span>
+<span class="nx">$26</span> <span class="o">=</span> <span class="p">{</span><span class="nx">next</span> <span class="o">=</span> <span class="mh">0x8ee8a0</span><span class="p">,</span> <span class="nx">word</span> <span class="o">=</span> <span class="mh">0x8ebf30</span><span class="p">}</span>
+
+<span class="p">(</span><span class="nx">gdb</span><span class="p">)</span> <span class="nx">p</span> <span class="o">*</span><span class="nx">words</span><span class="o">-&gt;</span><span class="nx">word</span>
+<span class="nx">$27</span> <span class="o">=</span> <span class="p">{</span><span class="nx">word</span> <span class="o">=</span> <span class="mh">0x8ee880</span> <span class="s2">&quot;/bin/echo&quot;</span><span class="p">,</span> <span class="nx">flags</span> <span class="o">=</span> <span class="mi">0</span><span class="p">}</span>
+
+<span class="p">(</span><span class="nx">gdb</span><span class="p">)</span> <span class="nx">p</span> <span class="o">*</span><span class="nx">words</span><span class="o">-&gt;</span><span class="nx">next</span><span class="o">-&gt;</span><span class="nx">word</span>
+<span class="nx">$28</span> <span class="o">=</span> <span class="p">{</span><span class="nx">word</span> <span class="o">=</span> <span class="mh">0x8ee940</span> <span class="s2">&quot;1&quot;</span><span class="p">,</span> <span class="nx">flags</span> <span class="o">=</span> <span class="mi">8</span><span class="p">}</span>
+
+<span class="p">(</span><span class="nx">gdb</span><span class="p">)</span> <span class="nx">p</span> <span class="o">*</span><span class="nx">words</span><span class="o">-&gt;</span><span class="nx">next</span><span class="o">-&gt;</span><span class="nx">next</span><span class="o">-&gt;</span><span class="nx">word</span>
+<span class="nx">$29</span> <span class="o">=</span> <span class="p">{</span><span class="nx">word</span> <span class="o">=</span> <span class="mh">0x8ee100</span> <span class="s2">&quot;g&quot;</span><span class="p">,</span> <span class="nx">flags</span> <span class="o">=</span> <span class="mi">8</span><span class="p">}</span>
+</pre></div>
+
+
+<p>接着看frame 3，在执行<code>execute_disk_command()</code>函数的时候，words参数也是有问题的。</p>
+<div class="highlight"><pre><span class="p">(</span><span class="n">gdb</span><span class="p">)</span> <span class="n">frame</span> <span class="mi">3</span>
+<span class="cp">#3  execute_simple_command (simple_command=&lt;value optimized out&gt;, pipe_in=-1, pipe_out=-1, async=&lt;value optimized out&gt;, fds_to_close=&lt;value optimized out&gt;)</span>
+    <span class="n">at</span> <span class="n">execute_cmd</span><span class="p">.</span><span class="n">c</span><span class="o">:</span><span class="mi">3863</span>
+<span class="mi">3863</span>      <span class="n">execute_disk_command</span> <span class="p">(</span><span class="n">words</span><span class="p">,</span> <span class="n">simple_command</span><span class="o">-&gt;</span><span class="n">redirects</span><span class="p">,</span> <span class="n">command_line</span><span class="p">,</span>
+
+<span class="p">(</span><span class="n">gdb</span><span class="p">)</span> <span class="n">list</span> <span class="n">execute_cmd</span><span class="p">.</span><span class="n">c</span><span class="o">:</span><span class="mi">3863</span>
+<span class="mi">3853</span>        <span class="p">}</span>
+<span class="mi">3854</span>
+<span class="mi">3855</span>      <span class="k">if</span> <span class="p">(</span><span class="n">command_line</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+<span class="mi">3856</span>        <span class="n">command_line</span> <span class="o">=</span> <span class="n">savestring</span> <span class="p">(</span><span class="n">the_printed_command_except_trap</span><span class="p">);</span>
+<span class="mi">3857</span>
+<span class="mi">3858</span>    <span class="err">#</span><span class="k">if</span> <span class="n">defined</span> <span class="p">(</span><span class="n">PROCESS_SUBSTITUTION</span><span class="p">)</span>
+<span class="mi">3859</span>      <span class="k">if</span> <span class="p">((</span><span class="n">subshell_environment</span> <span class="o">&amp;</span> <span class="n">SUBSHELL_COMSUB</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="p">(</span><span class="n">simple_command</span><span class="o">-&gt;</span><span class="n">flags</span> <span class="o">&amp;</span> <span class="n">CMD_NO_FORK</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="n">fifos_pending</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
+<span class="mi">3860</span>        <span class="n">simple_command</span><span class="o">-&gt;</span><span class="n">flags</span> <span class="o">&amp;=</span> <span class="o">~</span><span class="n">CMD_NO_FORK</span><span class="p">;</span>
+<span class="mi">3861</span>    <span class="err">#</span><span class="n">endif</span>
+<span class="mi">3862</span>
+<span class="mi">3863</span>      <span class="n">execute_disk_command</span> <span class="p">(</span><span class="n">words</span><span class="p">,</span> <span class="n">simple_command</span><span class="o">-&gt;</span><span class="n">redirects</span><span class="p">,</span> <span class="n">command_line</span><span class="p">,</span>
+<span class="mi">3864</span>                            <span class="n">pipe_in</span><span class="p">,</span> <span class="n">pipe_out</span><span class="p">,</span> <span class="n">async</span><span class="p">,</span> <span class="n">fds_to_close</span><span class="p">,</span>
+<span class="mi">3865</span>                            <span class="n">simple_command</span><span class="o">-&gt;</span><span class="n">flags</span><span class="p">);</span>
+<span class="mi">3866</span>
+<span class="mi">3867</span>     <span class="n">return_result</span><span class="o">:</span>
+<span class="mi">3868</span>      <span class="n">bind_lastarg</span> <span class="p">(</span><span class="n">lastarg</span><span class="p">);</span>
+<span class="mi">3869</span>      <span class="nf">FREE</span> <span class="p">(</span><span class="n">command_line</span><span class="p">);</span>
+<span class="mi">3870</span>      <span class="nf">dispose_words</span> <span class="p">(</span><span class="n">words</span><span class="p">);</span>
+<span class="mi">3871</span>      <span class="nf">discard_unwind_frame</span> <span class="p">(</span><span class="s">&quot;simple-command&quot;</span><span class="p">);</span>
+<span class="mi">3872</span>      <span class="n">this_command_name</span> <span class="o">=</span> <span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="p">)</span><span class="nb">NULL</span><span class="p">;</span>     <span class="cm">/* points to freed memory now */</span>
+
+<span class="p">(</span><span class="n">gdb</span><span class="p">)</span> <span class="n">p</span> <span class="n">words</span>
+<span class="err">$</span><span class="mi">31</span> <span class="o">=</span> <span class="p">(</span><span class="n">WORD_LIST</span> <span class="o">*</span><span class="p">)</span> <span class="mh">0x8ee960</span>
+<span class="p">(</span><span class="n">gdb</span><span class="p">)</span> <span class="n">p</span> <span class="o">*</span><span class="n">words</span>
+<span class="err">$</span><span class="mi">33</span> <span class="o">=</span> <span class="p">{</span><span class="n">next</span> <span class="o">=</span> <span class="mh">0x8ee8a0</span><span class="p">,</span> <span class="n">word</span> <span class="o">=</span> <span class="mh">0x8ebf30</span><span class="p">}</span>
+<span class="p">(</span><span class="n">gdb</span><span class="p">)</span> <span class="n">p</span> <span class="o">*</span><span class="n">words</span><span class="o">-&gt;</span><span class="n">word</span>
+<span class="err">$</span><span class="mi">34</span> <span class="o">=</span> <span class="p">{</span><span class="n">word</span> <span class="o">=</span> <span class="mh">0x8ee880</span> <span class="s">&quot;/bin/echo&quot;</span><span class="p">,</span> <span class="n">flags</span> <span class="o">=</span> <span class="mi">0</span><span class="p">}</span>
+<span class="p">(</span><span class="n">gdb</span><span class="p">)</span> <span class="n">p</span> <span class="o">*</span><span class="n">words</span><span class="o">-&gt;</span><span class="n">next</span><span class="o">-&gt;</span><span class="n">word</span>
+<span class="err">$</span><span class="mi">35</span> <span class="o">=</span> <span class="p">{</span><span class="n">word</span> <span class="o">=</span> <span class="mh">0x8ee940</span> <span class="s">&quot;1&quot;</span><span class="p">,</span> <span class="n">flags</span> <span class="o">=</span> <span class="mi">8</span><span class="p">}</span>
+<span class="p">(</span><span class="n">gdb</span><span class="p">)</span> <span class="n">p</span> <span class="o">*</span><span class="n">words</span><span class="o">-&gt;</span><span class="n">next</span><span class="o">-&gt;</span><span class="n">next</span><span class="o">-&gt;</span><span class="n">word</span>
+<span class="err">$</span><span class="mi">36</span> <span class="o">=</span> <span class="p">{</span><span class="n">word</span> <span class="o">=</span> <span class="mh">0x8ee100</span> <span class="s">&quot;g&quot;</span><span class="p">,</span> <span class="n">flags</span> <span class="o">=</span> <span class="mi">8</span><span class="p">}</span>
+
+<span class="p">(</span><span class="n">gdb</span><span class="p">)</span> <span class="n">p</span> <span class="n">command_line</span>
+<span class="err">$</span><span class="mi">32</span> <span class="o">=</span> <span class="mh">0x8ee9a0</span> <span class="s">&quot;/bin/echo [g1]&quot;</span>
+</pre></div>
+
+
+<p>再看frame 4，可以看到传给<code>execute_simple_command()</code>函数的参数是对的。也就是说在执行<code>execute_simple_command()</code>函数的时候，中间某一步words的值变了，然后对执行<code>execute_disk_command()</code>函数的时候就开始不对了。</p>
+<div class="highlight"><pre><span class="p">(</span><span class="n">gdb</span><span class="p">)</span> <span class="n">frame</span> <span class="mi">4</span>
+<span class="cp">#4  0x0000000000430463 in execute_command_internal (command=0x8ee6f0, asynchronous=&lt;value optimized out&gt;, pipe_in=-1, pipe_out=-1, fds_to_close=0x8ee740)</span>
+    <span class="n">at</span> <span class="n">execute_cmd</span><span class="p">.</span><span class="n">c</span><span class="o">:</span><span class="mi">741</span>
+<span class="mi">741</span>               <span class="n">execute_simple_command</span> <span class="p">(</span><span class="n">command</span><span class="o">-&gt;</span><span class="n">value</span><span class="p">.</span><span class="n">Simple</span><span class="p">,</span> <span class="n">pipe_in</span><span class="p">,</span> <span class="n">pipe_out</span><span class="p">,</span>
+
+<span class="p">(</span><span class="n">gdb</span><span class="p">)</span> <span class="n">list</span> <span class="n">execute_cmd</span><span class="p">.</span><span class="n">c</span><span class="o">:</span><span class="mi">741</span>
+<span class="mi">731</span>             <span class="n">last_pid</span> <span class="o">=</span> <span class="n">last_made_pid</span><span class="p">;</span>
+<span class="mi">732</span>             <span class="n">was_error_trap</span> <span class="o">=</span> <span class="n">signal_is_trapped</span> <span class="p">(</span><span class="n">ERROR_TRAP</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="n">signal_is_ignored</span> <span class="p">(</span><span class="n">ERROR_TRAP</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">;</span>
+<span class="mi">733</span>
+<span class="mi">734</span>             <span class="k">if</span> <span class="p">(</span><span class="n">ignore_return</span> <span class="o">&amp;&amp;</span> <span class="n">command</span><span class="o">-&gt;</span><span class="n">value</span><span class="p">.</span><span class="n">Simple</span><span class="p">)</span>
+<span class="mi">735</span>               <span class="n">command</span><span class="o">-&gt;</span><span class="n">value</span><span class="p">.</span><span class="n">Simple</span><span class="o">-&gt;</span><span class="n">flags</span> <span class="o">|=</span> <span class="n">CMD_IGNORE_RETURN</span><span class="p">;</span>
+<span class="mi">736</span>             <span class="k">if</span> <span class="p">(</span><span class="n">command</span><span class="o">-&gt;</span><span class="n">flags</span> <span class="o">&amp;</span> <span class="n">CMD_STDIN_REDIR</span><span class="p">)</span>
+<span class="mi">737</span>               <span class="n">command</span><span class="o">-&gt;</span><span class="n">value</span><span class="p">.</span><span class="n">Simple</span><span class="o">-&gt;</span><span class="n">flags</span> <span class="o">|=</span> <span class="n">CMD_STDIN_REDIR</span><span class="p">;</span>
+<span class="mi">738</span>
+<span class="mi">739</span>             <span class="n">line_number_for_err_trap</span> <span class="o">=</span> <span class="n">line_number</span> <span class="o">=</span> <span class="n">command</span><span class="o">-&gt;</span><span class="n">value</span><span class="p">.</span><span class="n">Simple</span><span class="o">-&gt;</span><span class="n">line</span><span class="p">;</span>
+<span class="mi">740</span>             <span class="n">exec_result</span> <span class="o">=</span>
+<span class="mi">741</span>               <span class="n">execute_simple_command</span> <span class="p">(</span><span class="n">command</span><span class="o">-&gt;</span><span class="n">value</span><span class="p">.</span><span class="n">Simple</span><span class="p">,</span> <span class="n">pipe_in</span><span class="p">,</span> <span class="n">pipe_out</span><span class="p">,</span>
+<span class="mi">742</span>                                       <span class="n">asynchronous</span><span class="p">,</span> <span class="n">fds_to_close</span><span class="p">);</span>
+<span class="mi">743</span>             <span class="n">line_number</span> <span class="o">=</span> <span class="n">save_line_number</span><span class="p">;</span>
+<span class="mi">744</span>
+<span class="mi">745</span>             <span class="cm">/* The temporary environment should be used for only the simple</span>
+<span class="cm">746                command immediately following its definition. */</span>
+<span class="mi">747</span>             <span class="n">dispose_used_env_vars</span> <span class="p">();</span>
+<span class="mi">748</span>
+<span class="mi">749</span>     <span class="err">#</span><span class="k">if</span> <span class="p">(</span><span class="n">defined</span> <span class="p">(</span><span class="n">ultrix</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="n">defined</span> <span class="p">(</span><span class="n">mips</span><span class="p">))</span> <span class="o">||</span> <span class="n">defined</span> <span class="p">(</span><span class="n">C_ALLOCA</span><span class="p">)</span>
+<span class="mi">750</span>             <span class="cm">/* Reclaim memory allocated with alloca () on machines which */</span>
+
+<span class="p">(</span><span class="n">gdb</span><span class="p">)</span> <span class="n">p</span> <span class="n">command</span>
+<span class="err">$</span><span class="mi">37</span> <span class="o">=</span> <span class="p">(</span><span class="n">COMMAND</span> <span class="o">*</span><span class="p">)</span> <span class="mh">0x8ee6f0</span>
+<span class="p">(</span><span class="n">gdb</span><span class="p">)</span> <span class="n">p</span> <span class="o">*</span><span class="n">command</span>
+<span class="err">$</span><span class="mi">38</span> <span class="o">=</span> <span class="p">{</span><span class="n">type</span> <span class="o">=</span> <span class="n">cm_simple</span><span class="p">,</span> <span class="n">flags</span> <span class="o">=</span> <span class="mi">64</span><span class="p">,</span> <span class="n">line</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">redirects</span> <span class="o">=</span> <span class="mh">0x0</span><span class="p">,</span> <span class="n">value</span> <span class="o">=</span> <span class="p">{</span><span class="n">For</span> <span class="o">=</span> <span class="mh">0x8ee720</span><span class="p">,</span> <span class="n">Case</span> <span class="o">=</span> <span class="mh">0x8ee720</span><span class="p">,</span> <span class="n">While</span> <span class="o">=</span> <span class="mh">0x8ee720</span><span class="p">,</span> <span class="n">If</span> <span class="o">=</span> <span class="mh">0x8ee720</span><span class="p">,</span>
+    <span class="n">Connection</span> <span class="o">=</span> <span class="mh">0x8ee720</span><span class="p">,</span> <span class="n">Simple</span> <span class="o">=</span> <span class="mh">0x8ee720</span><span class="p">,</span> <span class="n">Function_def</span> <span class="o">=</span> <span class="mh">0x8ee720</span><span class="p">,</span> <span class="n">Group</span> <span class="o">=</span> <span class="mh">0x8ee720</span><span class="p">,</span> <span class="n">Select</span> <span class="o">=</span> <span class="mh">0x8ee720</span><span class="p">,</span> <span class="n">Arith</span> <span class="o">=</span> <span class="mh">0x8ee720</span><span class="p">,</span> <span class="n">Cond</span> <span class="o">=</span> <span class="mh">0x8ee720</span><span class="p">,</span>
+    <span class="n">ArithFor</span> <span class="o">=</span> <span class="mh">0x8ee720</span><span class="p">,</span> <span class="n">Subshell</span> <span class="o">=</span> <span class="mh">0x8ee720</span><span class="p">,</span> <span class="n">Coproc</span> <span class="o">=</span> <span class="mh">0x8ee720</span><span class="p">}}</span>
+<span class="p">(</span><span class="n">gdb</span><span class="p">)</span> <span class="n">p</span> <span class="o">*</span><span class="n">command</span><span class="o">-&gt;</span><span class="n">Simple</span>
+<span class="n">There</span> <span class="n">is</span> <span class="n">no</span> <span class="n">member</span> <span class="n">named</span> <span class="n">Simple</span><span class="p">.</span>
+<span class="p">(</span><span class="n">gdb</span><span class="p">)</span> <span class="n">p</span> <span class="o">*</span><span class="n">command</span><span class="o">-&gt;</span><span class="n">value</span><span class="p">.</span><span class="n">Simple</span>
+<span class="err">$</span><span class="mi">39</span> <span class="o">=</span> <span class="p">{</span><span class="n">flags</span> <span class="o">=</span> <span class="mi">64</span><span class="p">,</span> <span class="n">line</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">words</span> <span class="o">=</span> <span class="mh">0x8ec0e0</span><span class="p">,</span> <span class="n">redirects</span> <span class="o">=</span> <span class="mh">0x0</span><span class="p">}</span>
+<span class="p">(</span><span class="n">gdb</span><span class="p">)</span> <span class="n">p</span> <span class="o">*</span><span class="n">command</span><span class="o">-&gt;</span><span class="n">value</span><span class="p">.</span><span class="n">Simple</span><span class="o">-&gt;</span><span class="n">words</span>
+<span class="err">$</span><span class="mi">40</span> <span class="o">=</span> <span class="p">{</span><span class="n">next</span> <span class="o">=</span> <span class="mh">0x8ec0c0</span><span class="p">,</span> <span class="n">word</span> <span class="o">=</span> <span class="mh">0x8ee670</span><span class="p">}</span>
+<span class="p">(</span><span class="n">gdb</span><span class="p">)</span> <span class="n">p</span> <span class="o">*</span><span class="n">command</span><span class="o">-&gt;</span><span class="n">value</span><span class="p">.</span><span class="n">Simple</span><span class="o">-&gt;</span><span class="n">words</span><span class="o">-&gt;</span><span class="n">word</span>
+<span class="err">$</span><span class="mi">41</span> <span class="o">=</span> <span class="p">{</span><span class="n">word</span> <span class="o">=</span> <span class="mh">0x8ee690</span> <span class="s">&quot;/bin/echo&quot;</span><span class="p">,</span> <span class="n">flags</span> <span class="o">=</span> <span class="mi">0</span><span class="p">}</span>
+<span class="p">(</span><span class="n">gdb</span><span class="p">)</span> <span class="n">p</span> <span class="o">*</span><span class="n">command</span><span class="o">-&gt;</span><span class="n">value</span><span class="p">.</span><span class="n">Simple</span><span class="o">-&gt;</span><span class="n">words</span><span class="o">-&gt;</span><span class="n">next</span><span class="o">-&gt;</span><span class="n">word</span>
+<span class="err">$</span><span class="mi">42</span> <span class="o">=</span> <span class="p">{</span><span class="n">word</span> <span class="o">=</span> <span class="mh">0x8ee6d0</span> <span class="s">&quot;[g1]&quot;</span><span class="p">,</span> <span class="n">flags</span> <span class="o">=</span> <span class="mi">0</span><span class="p">}</span>
+</pre></div>
+
+
+<p>上面最简单的定位部分就完成了，下面是对<code>execute_simple_command()</code>函数进行断点，一步步分析。 其中的过程就是在断点开始，对着代码，用<code>n</code>命令一直下一步，用<code>p</code>命令看words这个数据有没有变化。重复的步骤就不啰嗦了。</p>
+<div class="highlight"><pre><span class="p">(</span><span class="n">gdb</span><span class="p">)</span> <span class="k">break</span> <span class="n">execute_simple_command</span>
+<span class="n">Breakpoint</span> <span class="mi">2</span> <span class="n">at</span> <span class="mh">0x42eb80</span><span class="o">:</span> <span class="n">file</span> <span class="n">execute_cmd</span><span class="p">.</span><span class="n">c</span><span class="p">,</span> <span class="n">line</span> <span class="mf">3540.</span>
+</pre></div>
+
+
+<p>说重点，在bash-4.1/execute_cmd.c:3656这行words的值是有变化的，但值也是被optimized out了，执行到3667行的时候，可以看到words变了。所以要step in看看<code>expand_words</code>做了什么。</p>
+<div class="highlight"><pre><span class="mi">3657</span>          <span class="nf">if</span> <span class="p">(</span><span class="n">simple_command</span><span class="o">-&gt;</span><span class="n">flags</span> <span class="o">&amp;</span> <span class="n">CMD_IGNORE_RETURN</span><span class="p">)</span>
+<span class="p">(</span><span class="n">gdb</span><span class="p">)</span>
+<span class="mi">3656</span>          <span class="n">words</span> <span class="o">=</span> <span class="n">expand_words</span> <span class="p">(</span><span class="n">simple_command</span><span class="o">-&gt;</span><span class="n">words</span><span class="p">);</span>
+<span class="p">(</span><span class="n">gdb</span><span class="p">)</span> <span class="n">p</span> <span class="o">*</span><span class="n">words</span><span class="o">-&gt;</span><span class="n">next</span><span class="o">-&gt;</span><span class="n">word</span>
+<span class="n">value</span> <span class="n">has</span> <span class="n">been</span> <span class="n">optimized</span> <span class="n">out</span>
+<span class="p">(</span><span class="n">gdb</span><span class="p">)</span> <span class="n">n</span>
+<span class="mi">3657</span>          <span class="k">if</span> <span class="p">(</span><span class="n">simple_command</span><span class="o">-&gt;</span><span class="n">flags</span> <span class="o">&amp;</span> <span class="n">CMD_IGNORE_RETURN</span><span class="p">)</span>
+<span class="p">(</span><span class="n">gdb</span><span class="p">)</span>
+<span class="mi">3667</span>      <span class="k">if</span> <span class="p">(</span><span class="n">words</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+<span class="p">(</span><span class="n">gdb</span><span class="p">)</span> <span class="n">p</span> <span class="o">*</span><span class="n">words</span><span class="o">-&gt;</span><span class="n">next</span><span class="o">-&gt;</span><span class="n">word</span>
+<span class="err">$</span><span class="mi">1</span> <span class="o">=</span> <span class="p">{</span><span class="n">word</span> <span class="o">=</span> <span class="mh">0x8ee940</span> <span class="s">&quot;1&quot;</span><span class="p">,</span> <span class="n">flags</span> <span class="o">=</span> <span class="mi">8</span><span class="p">}</span>
+</pre></div>
+
+
+<p>这里list是<code>expand_words()</code>传进来的值，而new_list是返回的值，到这一步还是正确的。</p>
+<div class="highlight"><pre><span class="n">Breakpoint</span> <span class="mi">2</span><span class="p">,</span> <span class="n">execute_simple_command</span> <span class="p">(</span><span class="n">simple_command</span><span class="o">=</span><span class="mh">0x8ee720</span><span class="p">,</span> <span class="n">pipe_in</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">pipe_out</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">async</span><span class="o">=&lt;</span><span class="n">value</span> <span class="n">optimized</span> <span class="n">out</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">fds_to_close</span><span class="o">=&lt;</span><span class="n">value</span> <span class="n">optimized</span> <span class="n">out</span><span class="o">&gt;</span><span class="p">)</span>
+    <span class="n">at</span> <span class="n">execute_cmd</span><span class="p">.</span><span class="n">c</span><span class="o">:</span><span class="mi">3656</span>
+<span class="mi">3656</span>          <span class="n">words</span> <span class="o">=</span> <span class="n">expand_words</span> <span class="p">(</span><span class="n">simple_command</span><span class="o">-&gt;</span><span class="n">words</span><span class="p">);</span>
+<span class="p">(</span><span class="n">gdb</span><span class="p">)</span> <span class="n">s</span>
+<span class="n">expand_words</span> <span class="p">(</span><span class="n">list</span><span class="o">=</span><span class="mh">0x8ec0e0</span><span class="p">)</span> <span class="n">at</span> <span class="n">subst</span><span class="p">.</span><span class="n">c</span><span class="o">:</span><span class="mi">8748</span>
+<span class="mi">8748</span>      <span class="k">return</span> <span class="p">(</span><span class="n">expand_word_list_internal</span> <span class="p">(</span><span class="n">list</span><span class="p">,</span> <span class="n">WEXP_ALL</span><span class="p">));</span>
+<span class="p">(</span><span class="n">gdb</span><span class="p">)</span> <span class="n">n</span>
+<span class="n">expand_word_list_internal</span> <span class="p">(</span><span class="n">list</span><span class="o">=</span><span class="mh">0x8ec0e0</span><span class="p">,</span> <span class="n">eflags</span><span class="o">=</span><span class="mi">31</span><span class="p">)</span> <span class="n">at</span> <span class="n">subst</span><span class="p">.</span><span class="n">c</span><span class="o">:</span><span class="mi">9074</span>
+<span class="mi">9074</span>    <span class="p">{</span>
+<span class="p">(</span><span class="n">gdb</span><span class="p">)</span>
+<span class="mi">9078</span>      <span class="k">if</span> <span class="p">(</span><span class="n">list</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+<span class="p">(</span><span class="n">gdb</span><span class="p">)</span>
+<span class="mi">9074</span>    <span class="p">{</span>
+<span class="p">(</span><span class="n">gdb</span><span class="p">)</span>
+<span class="mi">9078</span>      <span class="k">if</span> <span class="p">(</span><span class="n">list</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+<span class="p">(</span><span class="n">gdb</span><span class="p">)</span>
+<span class="mi">9081</span>      <span class="n">garglist</span> <span class="o">=</span> <span class="n">new_list</span> <span class="o">=</span> <span class="n">copy_word_list</span> <span class="p">(</span><span class="n">list</span><span class="p">);</span>
+<span class="p">(</span><span class="n">gdb</span><span class="p">)</span>
+<span class="mi">9082</span>      <span class="k">if</span> <span class="p">(</span><span class="n">eflags</span> <span class="o">&amp;</span> <span class="n">WEXP_VARASSIGN</span><span class="p">)</span>
+<span class="p">(</span><span class="n">gdb</span><span class="p">)</span>
+<span class="mi">9084</span>          <span class="n">garglist</span> <span class="o">=</span> <span class="n">new_list</span> <span class="o">=</span> <span class="n">separate_out_assignments</span> <span class="p">(</span><span class="n">new_list</span><span class="p">);</span>
+<span class="p">(</span><span class="n">gdb</span><span class="p">)</span>
+<span class="mi">9126</span>      <span class="n">new_list</span> <span class="o">=</span> <span class="n">shell_expand_word_list</span> <span class="p">(</span><span class="n">new_list</span><span class="p">,</span> <span class="n">eflags</span><span class="p">);</span>
+<span class="p">(</span><span class="n">gdb</span><span class="p">)</span> <span class="n">p</span> <span class="o">*</span><span class="n">list</span><span class="o">-&gt;</span><span class="n">next</span><span class="o">-&gt;</span><span class="n">word</span>
+<span class="n">value</span> <span class="n">has</span> <span class="n">been</span> <span class="n">optimized</span> <span class="n">out</span>
+<span class="p">(</span><span class="n">gdb</span><span class="p">)</span> <span class="n">p</span> <span class="o">*</span><span class="n">new_list</span><span class="o">-&gt;</span><span class="n">next</span><span class="o">-&gt;</span><span class="n">word</span>
+<span class="err">$</span><span class="mi">4</span> <span class="o">=</span> <span class="p">{</span><span class="n">word</span> <span class="o">=</span> <span class="mh">0x8ee880</span> <span class="s">&quot;[g1]&quot;</span><span class="p">,</span> <span class="n">flags</span> <span class="o">=</span> <span class="mi">0</span><span class="p">}</span>
+</pre></div>
+
+
+<p>这里有个问题是，很多时候由于编译器优化的原因，不能获取值。比如<code>expand_words()</code>执行完了，值也变了，我们没看到是哪一步变的。这时候只能在这个函数从头再来一次，再step into更底层次的函数里。</p>
+<div class="highlight"><pre><span class="mi">9134</span>            <span class="n">new_list</span> <span class="o">=</span> <span class="n">glob_expand_word_list</span> <span class="p">(</span><span class="n">new_list</span><span class="p">,</span> <span class="n">eflags</span><span class="p">);</span>
+<span class="p">(</span><span class="n">gdb</span><span class="p">)</span> <span class="n">p</span> <span class="o">*</span><span class="n">new_list</span><span class="o">-&gt;</span><span class="n">next</span><span class="o">-&gt;</span><span class="n">word</span>
+<span class="n">value</span> <span class="n">has</span> <span class="n">been</span> <span class="n">optimized</span> <span class="n">out</span>
+<span class="p">(</span><span class="n">gdb</span><span class="p">)</span> <span class="n">n</span>
+<span class="mi">9140</span>      <span class="k">if</span> <span class="p">((</span><span class="n">eflags</span> <span class="o">&amp;</span> <span class="n">WEXP_VARASSIGN</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="n">subst_assign_varlist</span><span class="p">)</span>
+<span class="p">(</span><span class="n">gdb</span><span class="p">)</span>
+<span class="mi">9186</span>    <span class="p">}</span>
+<span class="p">(</span><span class="n">gdb</span><span class="p">)</span>
+<span class="n">execute_simple_command</span> <span class="p">(</span><span class="n">simple_command</span><span class="o">=</span><span class="mh">0x8ee720</span><span class="p">,</span> <span class="n">pipe_in</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">pipe_out</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">async</span><span class="o">=&lt;</span><span class="n">value</span> <span class="n">optimized</span> <span class="n">out</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">fds_to_close</span><span class="o">=&lt;</span><span class="n">value</span> <span class="n">optimized</span> <span class="n">out</span><span class="o">&gt;</span><span class="p">)</span>
+    <span class="n">at</span> <span class="n">execute_cmd</span><span class="p">.</span><span class="n">c</span><span class="o">:</span><span class="mi">3657</span>
+<span class="mi">3657</span>          <span class="k">if</span> <span class="p">(</span><span class="n">simple_command</span><span class="o">-&gt;</span><span class="n">flags</span> <span class="o">&amp;</span> <span class="n">CMD_IGNORE_RETURN</span><span class="p">)</span>
+<span class="p">(</span><span class="n">gdb</span><span class="p">)</span>
+</pre></div>
+
+
+<p>当然，我们从代码上可以看出，修改的地方可能有下面几个，这些都是跟<a href="https://www.gnu.org/software/bash/manual/html_node/Shell-Expansions.html#Shell-Expansions">Bash - Shell Expansions</a>相关的。看文档比看代码里的字符操作要更便捷一些。</p>
+<div class="highlight"><pre><span class="c1">// bash-4.1/subst.c</span>
+
+<span class="n">new_list</span> <span class="o">=</span> <span class="n">brace_expand_word_list</span> <span class="p">(</span><span class="n">new_list</span><span class="p">,</span> <span class="n">eflags</span><span class="p">);</span>
+<span class="n">new_list</span> <span class="o">=</span> <span class="n">shell_expand_word_list</span> <span class="p">(</span><span class="n">new_list</span><span class="p">,</span> <span class="n">eflags</span><span class="p">);</span>
+<span class="n">new_list</span> <span class="o">=</span> <span class="n">glob_expand_word_list</span> <span class="p">(</span><span class="n">new_list</span><span class="p">,</span> <span class="n">eflags</span><span class="p">);</span>
+<span class="n">new_list</span> <span class="o">=</span> <span class="n">dequote_list</span> <span class="p">(</span><span class="n">new_list</span><span class="p">);</span>
+</pre></div>
+
+
+<p>其实用户的问题是<a href="https://www.gnu.org/software/bash/manual/html_node/Filename-Expansion.html#Filename-Expansion">Filename Expansion</a> - <a href="https://www.gnu.org/software/bash/manual/html_node/Pattern-Matching.html#Pattern-Matching">Pattern Matching</a>问题，bash会先把<code>[3jnrw:mvlewgtf09u23434e12ermld234r25cscfw]</code>去做文件名匹配。由于当前目录下有文件<code>1</code>和<code>g</code>，所以，一大串字符会扩展成<code>1</code>和<code>g</code>再传给echo命令，结果就是输出<code>1</code>和<code>g</code>。如果用引号引起来，就没有这个问题了。或者去别的没有这两个文件的目录，也不会有问题。</p>
+<div class="highlight"><pre><span class="err">$</span> <span class="n">ls</span> <span class="o">-</span><span class="n">l</span> <span class="mi">1</span> <span class="n">g</span>
+<span class="o">-</span><span class="n">rw</span><span class="o">-</span><span class="n">r</span><span class="o">--</span><span class="n">r</span><span class="o">--</span> <span class="mi">1</span> <span class="n">root</span> <span class="n">root</span> <span class="mi">7284</span> <span class="n">Apr</span> <span class="mi">20</span> <span class="mi">16</span><span class="o">:</span><span class="mi">44</span> <span class="mi">1</span>
+<span class="o">-</span><span class="n">rw</span><span class="o">-</span><span class="n">r</span><span class="o">--</span><span class="n">r</span><span class="o">--</span> <span class="mi">1</span> <span class="n">root</span> <span class="n">root</span>  <span class="mi">169</span> <span class="n">Apr</span> <span class="mi">16</span> <span class="mi">14</span><span class="o">:</span><span class="mi">42</span> <span class="n">g</span>
+
+<span class="err">$</span> <span class="n">echo</span> <span class="p">[</span><span class="mi">3</span><span class="n">jnrw</span><span class="o">:</span><span class="n">mvlewgtf09u23434e12ermld234r25cscfw</span><span class="p">]</span>
+<span class="mi">1</span> <span class="n">g</span>
+
+<span class="err">$</span> <span class="n">echo</span> <span class="err">&#39;</span><span class="p">[</span><span class="mi">3</span><span class="n">jnrw</span><span class="o">:</span><span class="n">mvlewgtf09u23434e12ermld234r25cscfw</span><span class="p">]</span><span class="err">&#39;</span>
+<span class="p">[</span><span class="mi">3</span><span class="n">jnrw</span><span class="o">:</span><span class="n">mvlewgtf09u23434e12ermld234r25cscfw</span><span class="p">]</span>
+
+<span class="err">$</span> <span class="n">cd</span> <span class="o">/</span><span class="n">tmp</span>
+<span class="err">$</span> <span class="n">echo</span> <span class="p">[</span><span class="mi">3</span><span class="n">jnrw</span><span class="o">:</span><span class="n">mvlewgtf09u23434e12ermld234r25cscfw</span><span class="p">]</span>
+<span class="p">[</span><span class="mi">3</span><span class="n">jnrw</span><span class="o">:</span><span class="n">mvlewgtf09u23434e12ermld234r25cscfw</span><span class="p">]</span>
+</pre></div>
+
+
+<h2>总结</h2>
+<p>费了这么大周折来搞明白这个问题，想想真有点傻。Filename Expansion虽然平时也有用，但就是没想起来，导致花费了不少的时间。有时候真应该多想想，三思而后行，而不是上来就蛮干。</p></div>
+    <footer>
+<p class="meta">
+  <span class="byline author vcard">
+    Posted by <span class="fn">
+        Yang Liping
+    </span>
+  </span>
+<time datetime="2020-05-08T16:24:53.081225+08:00" pubdate>Fri 08 May 2020</time>  <span class="categories">
+    <a class='category' href='http://www.yanglp.com/category/tech.html'>Tech</a>
+  </span>
+  <span class="categories">
+    <a class="category" href="http://www.yanglp.com/tag/bash.html">bash</a>,    <a class="category" href="http://www.yanglp.com/tag/linux.html">linux</a>,    <a class="category" href="http://www.yanglp.com/tag/gdb.html">gdb</a>  </span>
+</p><div class="sharing">
+</div>    </footer>
+  </article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript></div>
+  </section>
+</div>
+<aside class="sidebar">
+  <section>
+    <h1>Recent Posts</h1>
+    <ul id="recent_posts">
+      <li class="post">
+          <a href="http://www.yanglp.com/posts/2020/05/08/yong-gdb-deubg-bashshu-chu-bu-zheng-chang-wen-ti.html">用gdb deubg bash输出不正常问题</a>
+      </li>
+      <li class="post">
+          <a href="http://www.yanglp.com/posts/2020/04/27/bashyin-yong-ming-ling-can-shu.html">bash引用命令参数</a>
+      </li>
+      <li class="post">
+          <a href="http://www.yanglp.com/posts/2020/04/25/python-import-sgeku-wen-jian.html">python import sge库文件</a>
+      </li>
+      <li class="post">
+          <a href="http://www.yanglp.com/posts/2019/12/18/mvclidao-zhi-da-liang-zfs-vdevbad_ashiftri-zhi.html">mvcli导致大量zfs vdev.bad_ashift日志</a>
+      </li>
+      <li class="post">
+          <a href="http://www.yanglp.com/posts/2014/04/16/dnsde-aliashe-anameji-lu.html">DNS的ALIAS和ANAME记录</a>
+      </li>
+    </ul>
+  </section>
+  <section>
+      
+    <h1>Categories</h1>
+    <ul id="recent_posts">
+        <li><a href="http://www.yanglp.com/category/tech.html">Tech</a></li>
+    </ul>
+  </section>
+ 
+
+  <section>
+  <h1>Tags</h1>
+    <a href="http://www.yanglp.com/tag/python.html">python</a>,    <a href="http://www.yanglp.com/tag/vim.html">vim</a>,    <a href="http://www.yanglp.com/tag/zfs.html">zfs</a>,    <a href="http://www.yanglp.com/tag/gdb.html">gdb</a>,    <a href="http://www.yanglp.com/tag/dns.html">DNS</a>,    <a href="http://www.yanglp.com/tag/linux.html">linux</a>,    <a href="http://www.yanglp.com/tag/sge.html">sge</a>,    <a href="http://www.yanglp.com/tag/bash.html">bash</a>  </section>
+
+
+    <section>
+        <h1>Blogroll</h1>
+        <ul>
+            <li><a href="http://getpelican.com/" target="_blank">Pelican</a></li>
+            <li><a href="http://python.org/" target="_blank">Python.org</a></li>
+            <li><a href="http://jinja.pocoo.org/" target="_blank">Jinja2</a></li>
+        </ul>
+    </section>
+
+</aside>    </div>
+  </div>
+  <footer role="contentinfo"><p>
+    Copyright &copy;  2014&ndash;2020  Yang Liping &mdash;
+  <span class="credit">Powered by <a href="http://getpelican.com">Pelican</a></span>
+</p></footer>
+  <script src="http://www.yanglp.com/theme/js/modernizr-2.0.js"></script>
+  <script src="http://www.yanglp.com/theme/js/ender.js"></script>
+  <script src="http://www.yanglp.com/theme/js/octopress.js" type="text/javascript"></script>
+    <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-50095101-1']);
+    _gaq.push(['_trackPageview']);
+    (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-50095101-1');
+    ga('send', 'pageview');
+</script>
+  <script type="text/javascript">
+    var disqus_shortname = 'yanglp';
+    var disqus_identifier = '/posts/2020/05/08/yong-gdb-deubg-bashshu-chu-bu-zheng-chang-wen-ti.html';
+    var disqus_url = 'http://www.yanglp.com/posts/2020/05/08/yong-gdb-deubg-bashshu-chu-bu-zheng-chang-wen-ti.html';
+    var disqus_title = '用gdb deubg bash输出不正常问题';
+    (function() {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = "//" + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+     })();
+  </script>
+</body>
+</html>

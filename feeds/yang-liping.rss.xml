@@ -1,5 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
-<rss version="2.0"><channel><title>Liping's Blog - Yang Liping</title><link>http://www.yanglp.com/</link><description>翁曰：「無他，但手熟爾。」</description><lastBuildDate>Mon, 27 Apr 2020 17:59:32 +0800</lastBuildDate><item><title>bash引用命令参数</title><link>http://www.yanglp.com/posts/2020/04/27/bashyin-yong-ming-ling-can-shu.html</link><description>&lt;h2&gt;&lt;code&gt;!-n&lt;/code&gt;&lt;/h2&gt;
+<rss version="2.0"><channel><title>Liping's Blog - Yang Liping</title><link>http://www.yanglp.com/</link><description>翁曰：「無他，但手熟爾。」</description><lastBuildDate>Fri, 08 May 2020 16:24:53 +0800</lastBuildDate><item><title>用gdb deubg bash输出不正常问题</title><link>http://www.yanglp.com/posts/2020/05/08/yong-gdb-deubg-bashshu-chu-bu-zheng-chang-wen-ti.html</link><description>&lt;p&gt;&lt;strong&gt;TL;DR&lt;/strong&gt; bash参数扩展导致命令输出跟预期结果不一致。&lt;/p&gt;
+&lt;h2&gt;问题描述&lt;/h2&gt;
+&lt;p&gt;用户反馈&lt;code&gt;echo&lt;/code&gt;或者&lt;code&gt;printf&lt;/code&gt;命令如下，当有1或者g的时候，只会输出1或/和g，没有其他数据，怀疑系统有问题。&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="err"&gt;$&lt;/span&gt; &lt;span class="n"&gt;printf&lt;/span&gt; &lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="mi"&gt;3&lt;/span&gt;&lt;span class="n"&gt;jnrw&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt;&lt;span class="n"&gt;mvlewgtf09u23434e12ermld234r25cscfw&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt;
+&lt;span class="mi"&gt;1&lt;/span&gt;
+
+&lt;span class="err"&gt;$&lt;/span&gt; &lt;span class="n"&gt;echo&lt;/span&gt; &lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="mi"&gt;3&lt;/span&gt;&lt;span class="n"&gt;jnrw&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt;&lt;span class="n"&gt;mvlewgtf09u23434e12ermld234r25cscfw&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt;
+&lt;span class="mi"&gt;1&lt;/span&gt; &lt;span class="n"&gt;g&lt;/span&gt;
+
+&lt;span class="err"&gt;$&lt;/span&gt; &lt;span class="n"&gt;echo&lt;/span&gt; &lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;adfaasdljfalsjljajzpqwekzv&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt;
+&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;adfaasdljfalsjljajzpqwekzv&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt;
+
+&lt;span class="err"&gt;$&lt;/span&gt; &lt;span class="n"&gt;uname&lt;/span&gt; &lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;r&lt;/span&gt;
+&lt;span class="mf"&gt;2.6.32&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="mf"&gt;504.16.2&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;el6&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;x86_64&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;h2&gt;问题分析&lt;/h2&gt;
+&lt;p&gt;使用&lt;code&gt;strace&lt;/code&gt;命令去跟踪，发现bash在执行execve系统调用的时候，传递给echo的就是只有1和g。问题应该在bash。&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="cp"&gt;# strace -f echo [aaag1bbb]&lt;/span&gt;
+&lt;span class="n"&gt;execve …&lt;/span&gt;&lt;/pre&gt;&lt;/div&gt;</description><dc:creator xmlns:dc="http://purl.org/dc/elements/1.1/">Yang Liping</dc:creator><pubDate>Fri, 08 May 2020 16:24:53 +0800</pubDate><guid isPermaLink="false">tag:www.yanglp.com,2020-05-08:/posts/2020/05/08/yong-gdb-deubg-bashshu-chu-bu-zheng-chang-wen-ti.html</guid><category>Tech</category><category>bash</category><category>linux</category><category>gdb</category></item><item><title>bash引用命令参数</title><link>http://www.yanglp.com/posts/2020/04/27/bashyin-yong-ming-ling-can-shu.html</link><description>&lt;h2&gt;&lt;code&gt;!-n&lt;/code&gt;&lt;/h2&gt;
 &lt;p&gt;引用之前输入过的命令，比如&lt;code&gt;!-1&lt;/code&gt;代表上一个命令，&lt;code&gt;!-2&lt;/code&gt;代表上上个命令&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="err"&gt;$&lt;/span&gt; &lt;span class="n"&gt;echo&lt;/span&gt; &lt;span class="s"&gt;&amp;quot;hello world!&amp;quot;&lt;/span&gt;
 &lt;span class="n"&gt;hello&lt;/span&gt; &lt;span class="n"&gt;world&lt;/span&gt;&lt;span class="o"&gt;!&lt;/span&gt;
