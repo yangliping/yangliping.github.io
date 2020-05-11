@@ -52,6 +52,27 @@
   		<article>
 <header>
       <h1 class="entry-title">
+        <a href="http://www.yanglp.com/posts/2020/05/11/sge-jsv-hang-issue.html">sge jsv hang issue</a>
+      </h1>
+    <p class="meta">
+<time datetime="2020-05-11T11:20:03.073331+08:00" pubdate>Mon 11 May 2020</time>    </p>
+</header>
+
+  <div class="entry-content"><p><strong>TL;DR</strong> sge代码里使用timeval结构体时，没有初始化成员的值，导致timeout时间非常大，jsv进程一直没有timeout退出。</p>
+<h2>问题描述</h2>
+<p>用户反馈sge的jsv进程一直卡死，如下面所示，15827、14992、15109、8805等进程应该很快就会结束，而不是一直运行着</p>
+<div class="highlight"><pre><span class="cp"># pstree -p | grep -i jsv2</span>
+        <span class="o">|-</span><span class="n">sjm</span><span class="p">(</span><span class="mi">402</span><span class="p">)</span><span class="o">-+-</span><span class="n">jsv2</span><span class="p">.</span><span class="n">sh</span><span class="p">(</span><span class="mi">15827</span><span class="p">)</span><span class="o">---</span><span class="n">jsv2</span><span class="p">.</span><span class="n">sh</span><span class="p">(</span><span class="mi">2855</span><span class="p">)</span><span class="o">---</span><span class="n">cut</span><span class="p">(</span><span class="mi">2857</span><span class="p">)</span>
+        <span class="o">|-</span><span class="n">sjm</span><span class="p">(</span><span class="mi">30992</span><span class="p">)</span><span class="o">-+-</span><span class="n">jsv2</span><span class="p">.</span><span class="n">sh</span><span class="p">(</span><span class="mi">14992</span><span class="p">)</span><span class="o">---</span><span class="n">jsv2</span><span class="p">.</span><span class="n">sh</span><span class="p">(</span><span class="mi">2849</span><span class="p">)</span><span class="o">---</span><span class="n">cut</span><span class="p">(</span><span class="mi">2851</span><span class="p">)</span>
+        <span class="o">|-</span><span class="n">sjm</span><span class="p">(</span><span class="mi">31662</span><span class="p">)</span><span class="o">-+-</span><span class="n">jsv2</span><span class="p">.</span><span class="n">sh</span><span class="p">(</span><span class="mi">15109</span><span class="p">)</span><span class="o">---</span><span class="n">jsv2</span><span class="p">.</span><span class="n">sh</span><span class="p">(</span><span class="mi">2846</span><span class="p">)</span><span class="o">---</span><span class="n">cut</span><span class="p">(</span><span class="mi">2848</span><span class="p">)</span>
+        <span class="o">|-</span><span class="n">sjm …</span></pre></div></div>
+  <footer>
+    <a rel="full-article" href="http://www.yanglp.com/posts/2020/05/11/sge-jsv-hang-issue.html">Read On &crarr;</a>
+  </footer>
+  		</article>
+  		<article>
+<header>
+      <h1 class="entry-title">
         <a href="http://www.yanglp.com/posts/2020/05/08/yong-gdb-deubg-bashshu-chu-bu-zheng-chang-wen-ti.html">用gdb deubg bash输出不正常问题</a>
       </h1>
     <p class="meta">
@@ -213,6 +234,9 @@
     <h1>Recent Posts</h1>
     <ul id="recent_posts">
       <li class="post">
+          <a href="http://www.yanglp.com/posts/2020/05/11/sge-jsv-hang-issue.html">sge jsv hang issue</a>
+      </li>
+      <li class="post">
           <a href="http://www.yanglp.com/posts/2020/05/08/yong-gdb-deubg-bashshu-chu-bu-zheng-chang-wen-ti.html">用gdb deubg bash输出不正常问题</a>
       </li>
       <li class="post">
@@ -223,9 +247,6 @@
       </li>
       <li class="post">
           <a href="http://www.yanglp.com/posts/2019/12/18/mvclidao-zhi-da-liang-zfs-vdevbad_ashiftri-zhi.html">mvcli导致大量zfs vdev.bad_ashift日志</a>
-      </li>
-      <li class="post">
-          <a href="http://www.yanglp.com/posts/2014/04/16/dnsde-aliashe-anameji-lu.html">DNS的ALIAS和ANAME记录</a>
       </li>
     </ul>
   </section>

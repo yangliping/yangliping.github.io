@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>sge jsv hang issue &mdash; Liping's Blog</title>
+  <meta name="author" content="Yang Liping">
+
+
+
+
+
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+
+    <link href="http://www.yanglp.com/favicon.png" rel="icon">
+
+  <link href="http://www.yanglp.com/theme/css/main.css" media="screen, projection"
+        rel="stylesheet" type="text/css">
+
+  <link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic"
+        rel="stylesheet" type="text/css">
+  <link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic"
+        rel="stylesheet" type="text/css">
+</head>
+
+<body>
+  <header role="banner"><hgroup>
+  <h1><a href="http://www.yanglp.com/">Liping's Blog</a></h1>
+    <h2>翁曰：「無他，但手熟爾。」</h2>
+</hgroup></header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+</ul>
+
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="sitesearch" value="www.yanglp.com">
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+
+<ul class="main-navigation">
+    <li><a href="/">Home</a></li>
+    <li><a href="/archives">Arcives</a></li>
+</ul></nav>
+  <div id="main">
+    <div id="content">
+<div>
+  <article class="hentry" role="article">
+<header>
+      <h1 class="entry-title">sge jsv hang issue</h1>
+    <p class="meta">
+<time datetime="2020-05-11T11:20:03.073331+08:00" pubdate>Mon 11 May 2020</time>    </p>
+</header>
+
+  <div class="entry-content"><p><strong>TL;DR</strong> sge代码里使用timeval结构体时，没有初始化成员的值，导致timeout时间非常大，jsv进程一直没有timeout退出。</p>
+<h2>问题描述</h2>
+<p>用户反馈sge的jsv进程一直卡死，如下面所示，15827、14992、15109、8805等进程应该很快就会结束，而不是一直运行着</p>
+<div class="highlight"><pre><span class="cp"># pstree -p | grep -i jsv2</span>
+        <span class="o">|-</span><span class="n">sjm</span><span class="p">(</span><span class="mi">402</span><span class="p">)</span><span class="o">-+-</span><span class="n">jsv2</span><span class="p">.</span><span class="n">sh</span><span class="p">(</span><span class="mi">15827</span><span class="p">)</span><span class="o">---</span><span class="n">jsv2</span><span class="p">.</span><span class="n">sh</span><span class="p">(</span><span class="mi">2855</span><span class="p">)</span><span class="o">---</span><span class="n">cut</span><span class="p">(</span><span class="mi">2857</span><span class="p">)</span>
+        <span class="o">|-</span><span class="n">sjm</span><span class="p">(</span><span class="mi">30992</span><span class="p">)</span><span class="o">-+-</span><span class="n">jsv2</span><span class="p">.</span><span class="n">sh</span><span class="p">(</span><span class="mi">14992</span><span class="p">)</span><span class="o">---</span><span class="n">jsv2</span><span class="p">.</span><span class="n">sh</span><span class="p">(</span><span class="mi">2849</span><span class="p">)</span><span class="o">---</span><span class="n">cut</span><span class="p">(</span><span class="mi">2851</span><span class="p">)</span>
+        <span class="o">|-</span><span class="n">sjm</span><span class="p">(</span><span class="mi">31662</span><span class="p">)</span><span class="o">-+-</span><span class="n">jsv2</span><span class="p">.</span><span class="n">sh</span><span class="p">(</span><span class="mi">15109</span><span class="p">)</span><span class="o">---</span><span class="n">jsv2</span><span class="p">.</span><span class="n">sh</span><span class="p">(</span><span class="mi">2846</span><span class="p">)</span><span class="o">---</span><span class="n">cut</span><span class="p">(</span><span class="mi">2848</span><span class="p">)</span>
+        <span class="o">|-</span><span class="n">sjm</span><span class="p">(</span><span class="mi">12019</span><span class="p">)</span><span class="o">-+-</span><span class="n">jsv2</span><span class="p">.</span><span class="n">sh</span><span class="p">(</span><span class="mi">8805</span><span class="p">)</span>
+</pre></div>
+
+
+<h2>问题分析</h2>
+<p>先用<code>pstack</code>看进程的情况</p>
+<div class="highlight"><pre><span class="err">#</span> <span class="nx">pstack</span> <span class="mi">12019</span>
+
+<span class="nx">...</span> <span class="nx">skipped</span> <span class="nx">....</span>
+
+<span class="k">Thread</span> <span class="mi">1</span> <span class="p">(</span><span class="k">Thread</span> <span class="mh">0x7f802063d840</span> <span class="p">(</span><span class="nx">LWP</span> <span class="mi">12019</span><span class="p">)):</span>
+<span class="vi">#0</span>  <span class="mh">0x0000003a9f4bd79d</span> <span class="k">in</span> <span class="nx">nanosleep</span> <span class="p">()</span> <span class="nb">from</span> <span class="p">/</span><span class="nx">lib64</span><span class="p">/</span><span class="nx">libc.so.6</span>
+<span class="vi">#1</span>  <span class="mh">0x00007f80223d5e1e</span> <span class="k">in</span> <span class="nx">sge_usleep</span> <span class="p">()</span> <span class="nb">from</span> <span class="p">/</span><span class="nx">opt</span><span class="p">/</span><span class="nx">gridengine</span><span class="p">/</span><span class="nx">lib</span><span class="p">/</span><span class="nx">lx</span><span class="na">-amd64</span><span class="p">/</span><span class="nx">libdrmaa.so.1.0</span>
+<span class="vi">#2</span>  <span class="mh">0x00007f80223d135e</span> <span class="k">in</span> <span class="nx">sge_peclose</span> <span class="p">()</span> <span class="nb">from</span> <span class="p">/</span><span class="nx">opt</span><span class="p">/</span><span class="nx">gridengine</span><span class="p">/</span><span class="nx">lib</span><span class="p">/</span><span class="nx">lx</span><span class="na">-amd64</span><span class="p">/</span><span class="nx">libdrmaa.so.1.0</span>
+<span class="vi">#3</span>  <span class="mh">0x00007f8022333d0e</span> <span class="k">in</span> <span class="nx">jsv_stop</span> <span class="p">()</span> <span class="nb">from</span> <span class="p">/</span><span class="nx">opt</span><span class="p">/</span><span class="nx">gridengine</span><span class="p">/</span><span class="nx">lib</span><span class="p">/</span><span class="nx">lx</span><span class="na">-amd64</span><span class="p">/</span><span class="nx">libdrmaa.so.1.0</span>
+<span class="vi">#4</span>  <span class="mh">0x00007f80223360d9</span> <span class="k">in</span> <span class="nx">jsv_do_communication</span> <span class="p">()</span> <span class="nb">from</span> <span class="p">/</span><span class="nx">opt</span><span class="p">/</span><span class="nx">gridengine</span><span class="p">/</span><span class="nx">lib</span><span class="p">/</span><span class="nx">lx</span><span class="na">-amd64</span><span class="p">/</span><span class="nx">libdrmaa.so.1.0</span>
+<span class="vi">#5</span>  <span class="mh">0x00007f8022334dae</span> <span class="k">in</span> <span class="nx">jsv_do_verify</span> <span class="p">()</span> <span class="nb">from</span> <span class="p">/</span><span class="nx">opt</span><span class="p">/</span><span class="nx">gridengine</span><span class="p">/</span><span class="nx">lib</span><span class="p">/</span><span class="nx">lx</span><span class="na">-amd64</span><span class="p">/</span><span class="nx">libdrmaa.so.1.0</span>
+<span class="vi">#6</span>  <span class="mh">0x00007f80222efe05</span> <span class="k">in</span> <span class="nx">sge_gdi_packet_execute_external</span> <span class="p">()</span> <span class="nb">from</span> <span class="p">/</span><span class="nx">opt</span><span class="p">/</span><span class="nx">gridengine</span><span class="p">/</span><span class="nx">lib</span><span class="p">/</span><span class="nx">lx</span><span class="na">-amd64</span><span class="p">/</span><span class="nx">libdrmaa.so.1.0</span>
+<span class="vi">#7</span>  <span class="mh">0x00007f80222ed007</span> <span class="k">in</span> <span class="nx">sge_gdi2_multi</span> <span class="p">()</span> <span class="nb">from</span> <span class="p">/</span><span class="nx">opt</span><span class="p">/</span><span class="nx">gridengine</span><span class="p">/</span><span class="nx">lib</span><span class="p">/</span><span class="nx">lx</span><span class="na">-amd64</span><span class="p">/</span><span class="nx">libdrmaa.so.1.0</span>
+<span class="vi">#8</span>  <span class="mh">0x00007f80222ed6fb</span> <span class="k">in</span> <span class="nx">sge_gdi2</span> <span class="p">()</span> <span class="nb">from</span> <span class="p">/</span><span class="nx">opt</span><span class="p">/</span><span class="nx">gridengine</span><span class="p">/</span><span class="nx">lib</span><span class="p">/</span><span class="nx">lx</span><span class="na">-amd64</span><span class="p">/</span><span class="nx">libdrmaa.so.1.0</span>
+<span class="vi">#9</span>  <span class="mh">0x00007f80223df189</span> <span class="k">in</span> <span class="nx">japi_send_job</span> <span class="p">()</span> <span class="nb">from</span> <span class="p">/</span><span class="nx">opt</span><span class="p">/</span><span class="nx">gridengine</span><span class="p">/</span><span class="nx">lib</span><span class="p">/</span><span class="nx">lx</span><span class="na">-amd64</span><span class="p">/</span><span class="nx">libdrmaa.so.1.0</span>
+<span class="vi">#10</span> <span class="mh">0x00007f80223e8292</span> <span class="k">in</span> <span class="nx">japi_run_job</span> <span class="p">()</span> <span class="nb">from</span> <span class="p">/</span><span class="nx">opt</span><span class="p">/</span><span class="nx">gridengine</span><span class="p">/</span><span class="nx">lib</span><span class="p">/</span><span class="nx">lx</span><span class="na">-amd64</span><span class="p">/</span><span class="nx">libdrmaa.so.1.0</span>
+<span class="vi">#11</span> <span class="mh">0x00007f80222d4442</span> <span class="k">in</span> <span class="nx">drmaa_run_job</span> <span class="p">()</span> <span class="nb">from</span> <span class="p">/</span><span class="nx">opt</span><span class="p">/</span><span class="nx">gridengine</span><span class="p">/</span><span class="nx">lib</span><span class="p">/</span><span class="nx">lx</span><span class="na">-amd64</span><span class="p">/</span><span class="nx">libdrmaa.so.1.0</span>
+<span class="vi">#12</span> <span class="mh">0x000000000042c375</span> <span class="k">in</span> <span class="nx">SgeBatchSystem</span><span class="p">::</span><span class="nl">submit</span><span class="p">(</span><span class="nx">Job</span><span class="o">&amp;</span><span class="p">)</span> <span class="p">()</span>
+<span class="vi">#13</span> <span class="mh">0x0000000000424d12</span> <span class="k">in</span> <span class="nx">JobMonitor</span><span class="p">::</span><span class="nl">submitJob</span><span class="p">()</span> <span class="p">()</span>
+<span class="vi">#14</span> <span class="mh">0x00000000004279e8</span> <span class="k">in</span> <span class="nx">JobMonitor</span><span class="p">::</span><span class="nl">processEvents</span><span class="p">()</span> <span class="p">()</span>
+<span class="vi">#15</span> <span class="mh">0x0000000000427dad</span> <span class="k">in</span> <span class="nx">JobMonitor</span><span class="p">::</span><span class="nl">submit</span><span class="p">(</span><span class="nx">std</span><span class="p">::</span><span class="nl">basic_string</span><span class="o">&lt;</span><span class="nx">char</span><span class="p">,</span> <span class="nx">std</span><span class="p">::</span><span class="nl">char_traits</span><span class="o">&lt;</span><span class="nx">char</span><span class="o">&gt;</span><span class="p">,</span> <span class="nx">std</span><span class="p">::</span><span class="nl">allocator</span><span class="o">&lt;</span><span class="nx">char</span><span class="o">&gt;</span> <span class="o">&gt;</span> <span class="nx">const</span><span class="o">&amp;</span><span class="p">,</span> <span class="nx">std</span><span class="p">::</span><span class="nl">basic_string</span><span class="o">&lt;</span><span class="nx">char</span><span class="p">,</span> <span class="nx">std</span><span class="p">::</span><span class="nl">char_traits</span><span class="o">&lt;</span><span class="nx">char</span><span class="o">&gt;</span><span class="p">,</span> <span class="nx">std</span><span class="p">::</span><span class="nl">allocator</span><span class="o">&lt;</span><span class="nx">char</span><span class="o">&gt;</span> <span class="o">&gt;</span> <span class="nx">const</span><span class="o">&amp;</span><span class="p">,</span> <span class="nx">std</span><span class="p">::</span><span class="nl">basic_string</span><span class="o">&lt;</span><span class="nx">char</span><span class="p">,</span> <span class="nx">std</span><span class="p">::</span><span class="nl">char_traits</span><span class="o">&lt;</span><span class="nx">char</span><span class="o">&gt;</span><span class="p">,</span> <span class="nx">std</span><span class="p">::</span><span class="nl">allocator</span><span class="o">&lt;</span><span class="nx">char</span><span class="o">&gt;</span> <span class="o">&gt;</span> <span class="nx">const</span><span class="o">&amp;</span><span class="p">,</span> <span class="nx">bool</span><span class="p">,</span> <span class="nx">std</span><span class="p">::</span><span class="nl">vector</span><span class="o">&lt;</span><span class="nx">std</span><span class="p">::</span><span class="nl">basic_string</span><span class="o">&lt;</span><span class="nx">char</span><span class="p">,</span> <span class="nx">std</span><span class="p">::</span><span class="nl">char_traits</span><span class="o">&lt;</span><span class="nx">char</span><span class="o">&gt;</span><span class="p">,</span> <span class="nx">std</span><span class="p">::</span><span class="nl">allocator</span><span class="o">&lt;</span><span class="nx">char</span><span class="o">&gt;</span> <span class="o">&gt;</span><span class="p">,</span> <span class="nx">std</span><span class="p">::</span><span class="nl">allocator</span><span class="o">&lt;</span><span class="nx">std</span><span class="p">::</span><span class="nl">basic_string</span><span class="o">&lt;</span><span class="nx">char</span><span class="p">,</span> <span class="nx">std</span><span class="p">::</span><span class="nl">char_traits</span><span class="o">&lt;</span><span class="nx">char</span><span class="o">&gt;</span><span class="p">,</span> <span class="nx">std</span><span class="p">::</span><span class="nl">allocator</span><span class="o">&lt;</span><span class="nx">char</span><span class="o">&gt;</span> <span class="o">&gt;</span> <span class="o">&gt;</span> <span class="o">&gt;</span> <span class="nx">const</span><span class="o">&amp;</span><span class="p">)</span> <span class="p">()</span>
+<span class="vi">#16</span> <span class="mh">0x000000000040a2d0</span> <span class="k">in</span> <span class="nx">main</span> <span class="p">()</span>
+</pre></div>
+
+
+<p>可以看到，Thread 1一直停在nanosleep()进程。</p>
+<p>使用gdb attach用户进程<em>（注：由于权限原因，当前系统只能以用户权限去attach）</em></p>
+<div class="highlight"><pre><span class="err">#</span> <span class="nx">sudo</span> <span class="na">-u</span> <span class="o">&lt;</span><span class="nx">user_name</span><span class="o">&gt;</span> <span class="nx">gdb</span> <span class="na">-p</span> <span class="mi">12019</span>
+<span class="p">(</span><span class="nx">gdb</span><span class="p">)</span> <span class="nx">bt</span> <span class="kc">full</span>
+<span class="vi">#0</span>  <span class="mh">0x0000003a9f4bd79d</span> <span class="k">in</span> <span class="nx">nanosleep</span> <span class="p">()</span> <span class="nb">from</span> <span class="p">/</span><span class="nx">lib64</span><span class="p">/</span><span class="nx">libc.so.6</span>
+<span class="nx">No</span> <span class="nx">symbol</span> <span class="nb">table</span> <span class="nx">info</span> <span class="nx">available.</span>
+<span class="vi">#1</span>  <span class="mh">0x00007f80223d5e1e</span> <span class="k">in</span> <span class="nx">sge_usleep</span> <span class="p">(</span><span class="n">sleep_time</span><span class="o">=&lt;</span><span class="nb">value</span> <span class="nx">optimized</span> <span class="nb">out</span><span class="o">&gt;</span><span class="p">)</span> <span class="nx">at</span> <span class="nx">..</span><span class="p">/</span><span class="nx">libs</span><span class="p">/</span><span class="nx">uti</span><span class="p">/</span><span class="nx">sge_time.c</span><span class="p">:</span><span class="mi">475</span>
+        <span class="n">req</span> <span class="o">=</span> <span class="p">{</span><span class="n">tv_sec</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">tv_nsec</span> <span class="o">=</span> <span class="mi">100000000</span><span class="p">}</span>
+        <span class="n">rem</span> <span class="o">=</span> <span class="p">{</span><span class="n">tv_sec</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">tv_nsec</span> <span class="o">=</span> <span class="mi">95651751</span><span class="p">}</span>
+<span class="vi">#2</span>  <span class="mh">0x00007f80223d135e</span> <span class="k">in</span> <span class="nx">sge_peclose</span> <span class="p">(</span><span class="n">pid</span><span class="o">=</span><span class="mi">8805</span><span class="p">,</span> <span class="n">fp_in</span><span class="o">=&lt;</span><span class="nb">value</span> <span class="nx">optimized</span> <span class="nb">out</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">fp_out</span><span class="o">=&lt;</span><span class="nb">value</span> <span class="nx">optimized</span> <span class="nb">out</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">fp_err</span><span class="o">=&lt;</span><span class="nb">value</span> <span class="nx">optimized</span> <span class="nb">out</span><span class="o">&gt;</span><span class="p">,</span>
+    <span class="n">timeout</span><span class="o">=</span><span class="mh">0x7ffda3d2ce80</span><span class="p">)</span> <span class="nx">at</span> <span class="nx">..</span><span class="p">/</span><span class="nx">libs</span><span class="p">/</span><span class="nx">uti</span><span class="p">/</span><span class="nx">sge_stdio.c</span><span class="p">:</span><span class="mi">681</span>
+        <span class="n">sleep_for</span> <span class="o">=</span> <span class="mi">100000</span>
+        <span class="n">i</span> <span class="o">=</span> <span class="o">&lt;</span><span class="nb">value</span> <span class="nx">optimized</span> <span class="nb">out</span><span class="o">&gt;</span>
+        <span class="n">timeout_us</span> <span class="o">=</span> <span class="mi">140099372198732</span>
+        <span class="n">SGE_FUNC</span> <span class="o">=</span> <span class="s2">&quot;sge_peclose&quot;</span>
+<span class="vi">#3</span>  <span class="mh">0x00007f8022333d0e</span> <span class="k">in</span> <span class="nx">jsv_stop</span> <span class="p">(</span><span class="n">jsv</span><span class="o">=</span><span class="mh">0xa862b0</span><span class="p">,</span> <span class="n">answer_list</span><span class="o">=&lt;</span><span class="nb">value</span> <span class="nx">optimized</span> <span class="nb">out</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">try_soft_quit</span><span class="o">=&lt;</span><span class="nb">value</span> <span class="nx">optimized</span> <span class="nb">out</span><span class="o">&gt;</span><span class="p">)</span> <span class="nx">at</span> <span class="nx">..</span><span class="p">/</span><span class="nx">libs</span><span class="p">/</span><span class="nx">sgeobj</span><span class="p">/</span><span class="nx">sge_jsv.c</span><span class="p">:</span><span class="mi">393</span>
+        <span class="n">scriptfile</span> <span class="o">=</span> <span class="mh">0xa7d810</span> <span class="s2">&quot;/opt/gridengine/default/common/jsv2.sh&quot;</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="p">{</span><span class="n">tv_sec</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">tv_usec</span> <span class="o">=</span> <span class="mi">140188306598732</span><span class="p">}</span>
+        <span class="n">pid</span> <span class="o">=</span> <span class="mi">8805</span>
+        <span class="n">SGE_FUNC</span> <span class="o">=</span> <span class="s2">&quot;jsv_stop&quot;</span>
+<span class="vi">#4</span>  <span class="mh">0x00007f80223360d9</span> <span class="k">in</span> <span class="nx">jsv_do_communication</span> <span class="p">(</span><span class="n">ctx</span><span class="o">=</span><span class="mh">0xa75270</span><span class="p">,</span> <span class="n">jsv</span><span class="o">=</span><span class="mh">0xa862b0</span><span class="p">,</span> <span class="n">answer_list</span><span class="o">=&lt;</span><span class="nb">value</span> <span class="nx">optimized</span> <span class="nb">out</span><span class="o">&gt;</span><span class="p">)</span> <span class="nx">at</span> <span class="nx">..</span><span class="p">/</span><span class="nx">libs</span><span class="p">/</span><span class="nx">sgeobj</span><span class="p">/</span><span class="nx">sge_jsv_script.c</span><span class="p">:</span><span class="mi">2574</span>
+        <span class="n">start_time</span> <span class="o">=</span> <span class="mi">1588999988</span>
+        <span class="n">do_retry</span> <span class="o">=</span> <span class="kc">true</span>
+        <span class="n">jsv_timeout</span> <span class="o">=</span> <span class="mi">10</span>
+        <span class="n">ret</span> <span class="o">=</span> <span class="kc">true</span>
+        <span class="n">input</span> <span class="o">=</span> <span class="s2">&quot;STARTED</span><span class="se">\000</span><span class="s2">TATE ACCEPT Job is accepted&quot;</span><span class="p">,</span> <span class="s1">&#39;</span><span class="se">\000</span><span class="s1">&#39;</span> <span class="o">&lt;</span><span class="nx">repeats</span> <span class="mi">197</span> <span class="nx">times</span><span class="o">&gt;</span><span class="p">,</span> <span class="s2">&quot;Ч{</span><span class="se">\237</span><span class="s2">:</span><span class="se">\000\000\000\321</span><span class="s2">.-</span><span class="se">\\\002\200\377\377\060\321</span><span class="s2">ң</span><span class="se">\375\177\000\000</span><span class="s2">/</span><span class="se">\321</span><span class="s2">ң</span><span class="se">\375\177</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s1">&#39;</span><span class="se">\000</span><span class="s1">&#39;</span> <span class="o">&lt;</span><span class="nx">repeats</span> <span class="mi">82</span> <span class="nx">times</span><span class="o">&gt;</span><span class="s2">&quot;</span><span class="se">\200</span><span class="s2">, </span><span class="se">\247</span><span class="s2">{</span><span class="se">\237</span><span class="s2">:</span><span class="se">\000\000\000\020\004\000\000\000\000\000\000\000\004\000\000\000\000\000\000\020</span><span class="s2">T</span><span class="se">\250\000\000\000\000\000</span><span class="s2">@3</span><span class="se">\252\000\000\000\000\000\b\a\001\000\000\000\000\000</span><span class="s2">y</span><span class="se">\344</span><span class="s2">G</span><span class="se">\237</span><span class="s2">:</span><span class="se">\000\000\000\000\004\000\000\000\000\000\000\361</span><span class="s2">--</span><span class="se">\\\002\200\377\377</span><span class="s2">A</span><span class="se">\000\000\000\000\000\000\000\020\000\000\000\000\000\000\000</span><span class="s2">@</span><span class="se">\000\000\000\000\000\000\000\002\000\000\000\000\000\000\000\020\322</span><span class="s2">ң</span><span class="se">\375\177\000\000\000\000\000\000\000\000\000\000</span><span class="s2">]</span><span class="se">\000\000\000</span><span class="s2">n&quot;</span><span class="p">,</span> <span class="s1">&#39;</span><span class="se">\000</span><span class="s1">&#39;</span> <span class="o">&lt;</span><span class="nx">repeats</span> <span class="mi">19</span> <span class="nx">times</span><span class="o">&gt;</span><span class="p">,</span> <span class="s2">&quot;w</span><span class="se">\000\000\000</span><span class="s2">|</span><span class="se">\000\000\000</span><span class="s2">&quot;</span><span class="nx">...</span>
+        <span class="n">SGE_FUNC</span> <span class="o">=</span> <span class="s2">&quot;jsv_do_communication&quot;</span>
+<span class="vi">#5</span>  <span class="mh">0x00007f8022334dae</span> <span class="k">in</span> <span class="nx">jsv_do_verify</span> <span class="p">(</span><span class="n">ctx</span><span class="o">=</span><span class="mh">0xa75270</span><span class="p">,</span> <span class="n">context</span><span class="o">=&lt;</span><span class="nb">value</span> <span class="nx">optimized</span> <span class="nb">out</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">job</span><span class="o">=</span><span class="mh">0x7ffda3d2f8e8</span><span class="p">,</span> <span class="n">answer_list</span><span class="o">=</span><span class="mh">0x7ffda3d2fab8</span><span class="p">,</span> <span class="n">holding_lock</span><span class="o">=</span><span class="kc">false</span><span class="p">)</span>
+    <span class="nx">at</span> <span class="nx">..</span><span class="p">/</span><span class="nx">libs</span><span class="p">/</span><span class="nx">sgeobj</span><span class="p">/</span><span class="nx">sge_jsv.c</span><span class="p">:</span><span class="mi">1095</span>
+        <span class="n">old_job</span> <span class="o">=</span> <span class="o">&lt;</span><span class="nb">value</span> <span class="nx">optimized</span> <span class="nb">out</span><span class="o">&gt;</span>
+        <span class="n">new_job</span> <span class="o">=</span> <span class="mh">0xa9b770</span>
+        <span class="n">jsv_url</span> <span class="o">=</span> <span class="mh">0x0</span>
+        <span class="n">holding_mutex</span> <span class="o">=</span> <span class="o">&lt;</span><span class="nb">value</span> <span class="nx">optimized</span> <span class="nb">out</span><span class="o">&gt;</span>
+        <span class="n">ret</span> <span class="o">=</span> <span class="o">&lt;</span><span class="nb">value</span> <span class="nx">optimized</span> <span class="nb">out</span><span class="o">&gt;</span>
+        <span class="n">jsv</span> <span class="o">=</span> <span class="mh">0xa862b0</span>
+        <span class="n">jsv_next</span> <span class="o">=</span> <span class="mh">0x0</span>
+        <span class="n">iterator</span> <span class="o">=</span> <span class="mh">0x0</span>
+        <span class="n">SGE_FUNC</span> <span class="o">=</span> <span class="s2">&quot;jsv_do_verify&quot;</span>
+
+ <span class="nx">...</span> <span class="nx">skipped</span> <span class="nx">...</span>
+</pre></div>
+
+
+<p>从frame 3可以看到jsv执行<code>jsv_stop()</code>去停止jsv实例，代码里函数的描述是这样的</p>
+<div class="highlight"><pre><span class="c1">// source/libs/sgeobj/sge_jsv.c</span>
+
+<span class="o">/******</span> <span class="n">sge_jsv</span><span class="o">/</span><span class="n">jsv_stop</span><span class="p">()</span> <span class="o">*****************************************************</span>
+<span class="o">*</span>  <span class="n">NAME</span>
+<span class="o">*</span>     <span class="n">jsv_stop</span><span class="p">()</span> <span class="o">--</span> <span class="n">Stop</span> <span class="n">a</span> <span class="n">JSV</span> <span class="n">instance</span> <span class="n">which</span> <span class="n">was</span> <span class="n">previously</span> <span class="n">started</span><span class="o">-</span>
+<span class="o">*</span>
+<span class="o">*</span>  <span class="n">SYNOPSIS</span>
+<span class="o">*</span>     <span class="kt">bool</span> <span class="n">jsv_stop</span><span class="p">(</span><span class="n">lListElem</span> <span class="o">*</span><span class="n">jsv</span><span class="p">,</span> <span class="n">lList</span> <span class="o">**</span><span class="n">answer_list</span><span class="p">,</span> <span class="kt">bool</span> <span class="n">try_soft_quit</span><span class="p">)</span><span class="o">-</span>
+<span class="o">*</span>
+<span class="o">*</span>  <span class="n">FUNCTION</span>
+<span class="o">*</span>     <span class="n">Stop</span> <span class="n">a</span> <span class="n">running</span> <span class="n">JSV</span> <span class="n">instance</span> <span class="n">which</span> <span class="n">was</span> <span class="n">previously</span> <span class="n">started</span><span class="p">.</span> <span class="n">If</span> <span class="n">the</span>
+<span class="o">*</span>     <span class="n">variable</span> <span class="err">&#39;</span><span class="n">try_soft_quit</span><span class="err">&#39;</span> <span class="n">is</span> <span class="n">set</span> <span class="n">to</span> <span class="err">&#39;</span><span class="nb">true</span><span class="err">&#39;</span> <span class="n">then</span> <span class="n">this</span> <span class="n">function</span> <span class="n">tries</span>
+<span class="o">*</span>     <span class="n">to</span> <span class="n">communicate</span> <span class="n">with</span> <span class="n">the</span> <span class="n">process</span><span class="p">.</span> <span class="n">It</span> <span class="n">will</span> <span class="n">then</span> <span class="n">send</span> <span class="n">a</span> <span class="s">&quot;QUIT&quot;</span> <span class="n">string</span>
+<span class="o">*</span>     <span class="n">to</span> <span class="n">pipe</span> <span class="n">end</span> <span class="n">which</span> <span class="n">is</span> <span class="n">connected</span> <span class="n">with</span> <span class="n">the</span> <span class="n">stdin</span> <span class="n">of</span> <span class="n">the</span> <span class="n">JSV</span> <span class="n">process</span><span class="p">.</span>
+<span class="o">*</span>     <span class="n">If</span> <span class="n">the</span> <span class="n">script</span> <span class="n">does</span> <span class="n">then</span> <span class="n">not</span> <span class="n">terminate</span> <span class="n">within</span> <span class="n">JSV_QUIT_TIMEOUT</span><span class="o">-</span>
+<span class="o">*</span>     <span class="n">seconds</span> <span class="n">then</span> <span class="n">it</span> <span class="n">will</span> <span class="n">be</span> <span class="n">terminated</span> <span class="n">hard</span> <span class="n">via</span> <span class="n">kill</span> <span class="n">signal</span><span class="p">.</span>
+</pre></div>
+
+
+<p>下面是实际代码部分</p>
+<div class="highlight"><pre><span class="c1">// source/libs/sgeobj/sge_jsv.c</span>
+
+<span class="kt">bool</span>
+<span class="nf">jsv_stop</span><span class="p">(</span><span class="n">lListElem</span> <span class="o">*</span><span class="n">jsv</span><span class="p">,</span> <span class="n">lList</span> <span class="o">**</span><span class="n">answer_list</span><span class="p">,</span> <span class="kt">bool</span> <span class="n">try_soft_quit</span><span class="p">)</span> <span class="p">{</span>
+   <span class="kt">bool</span> <span class="n">ret</span> <span class="o">=</span> <span class="nb">true</span><span class="p">;</span>
+   <span class="kt">pid_t</span> <span class="n">pid</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+
+   <span class="n">DENTER</span><span class="p">(</span><span class="n">TOP_LAYER</span><span class="p">,</span> <span class="s">&quot;jsv_stop&quot;</span><span class="p">);</span>
+
+   <span class="cm">/* stop is only possible if it was started before */</span>
+   <span class="n">pid</span> <span class="o">=</span> <span class="n">jsv_get_pid</span><span class="p">(</span><span class="n">jsv</span><span class="p">);</span>
+   <span class="k">if</span> <span class="p">(</span><span class="n">pid</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+      <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">scriptfile</span> <span class="o">=</span> <span class="n">lGetString</span><span class="p">(</span><span class="n">jsv</span><span class="p">,</span> <span class="n">JSV_command</span><span class="p">);</span>
+      <span class="k">struct</span> <span class="n">timeval</span> <span class="n">t</span><span class="p">;</span>
+
+      <span class="cm">/*</span>
+<span class="cm">       * send a quit command to stop the JSV softly.</span>
+<span class="cm">       * give it then JSV_QUIT_TIMEOUT seconds before</span>
+<span class="cm">       * the kill is triggered (sge_peclose)</span>
+<span class="cm">       */</span>
+      <span class="k">if</span> <span class="p">(</span><span class="n">try_soft_quit</span><span class="p">)</span> <span class="p">{</span> <span class="c1">// 大部分情况下，都是try_soft_quit=true，发送QUIT给jsv实例</span>
+         <span class="n">jsv_send_command</span><span class="p">(</span><span class="n">jsv</span><span class="p">,</span> <span class="n">answer_list</span><span class="p">,</span> <span class="s">&quot;QUIT&quot;</span><span class="p">);</span>
+         <span class="n">t</span><span class="p">.</span><span class="n">tv_sec</span> <span class="o">=</span> <span class="n">JSV_QUIT_TIMEOUT</span><span class="p">;</span>
+      <span class="p">}</span> <span class="k">else</span> <span class="p">{</span> <span class="c1">// 但这里的情况是不发送QUIT，下面会详细说明</span>
+         <span class="n">t</span><span class="p">.</span><span class="n">tv_sec</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+      <span class="p">}</span>
+
+      <span class="cm">/*</span>
+<span class="cm">       * kill the JSV process</span>
+<span class="cm">       */</span>
+      <span class="n">sge_peclose</span><span class="p">(</span><span class="n">pid</span><span class="p">,</span> <span class="n">lGetRef</span><span class="p">(</span><span class="n">jsv</span><span class="p">,</span> <span class="n">JSV_in</span><span class="p">),</span> <span class="c1">// sge_peclose会发送SIGKILL给jsv实例</span>
+                  <span class="n">lGetRef</span><span class="p">(</span><span class="n">jsv</span><span class="p">,</span> <span class="n">JSV_out</span><span class="p">),</span> <span class="n">lGetRef</span><span class="p">(</span><span class="n">jsv</span><span class="p">,</span> <span class="n">JSV_err</span><span class="p">),</span> <span class="o">&amp;</span><span class="n">t</span><span class="p">);</span>
+
+      <span class="n">INFO</span><span class="p">((</span><span class="n">SGE_EVENT</span><span class="p">,</span> <span class="n">MSG_JSV_STOPPED_S</span><span class="p">,</span> <span class="n">scriptfile</span><span class="p">));</span>
+
+      <span class="n">jsv_set_pid</span><span class="p">(</span><span class="n">jsv</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">);</span>
+   <span class="p">}</span>
+   <span class="n">DRETURN</span><span class="p">(</span><span class="n">ret</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>在frame 3中，有几个重要信息。pid 8805就是我们认为应该运行很长时间的jsv脚本<code>/opt/gridengine/default/common/jsv2.sh</code>，而<code>t</code>是传给<code>sge_peclose()</code>函数的<code>timeout</code>参数。</p>
+<div class="highlight"><pre><span class="n">scriptfile</span> <span class="o">=</span> <span class="mh">0xa7d810</span> <span class="s">&quot;/opt/gridengine/default/common/jsv2.sh&quot;</span>
+<span class="n">t</span> <span class="o">=</span> <span class="p">{</span><span class="n">tv_sec</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">tv_usec</span> <span class="o">=</span> <span class="mi">140188306598732</span><span class="p">}</span>
+<span class="n">pid</span> <span class="o">=</span> <span class="mi">8805</span>
+</pre></div>
+
+
+<p>再看frame 2里<code>sge_peclose()</code>函数的代码，前面部分首先是初始化timeout_us的值。这里timeout参数就是上面看到的，timeout-&gt;tv_sec=0，timeout-&gt;tv_usec=140188306598732，<strong>这是一个很大的数</strong>。</p>
+<div class="highlight"><pre><span class="c1">// source/libs/uti/sge_stdio.c</span>
+
+<span class="kt">int</span> <span class="nf">sge_peclose</span><span class="p">(</span><span class="kt">pid_t</span> <span class="n">pid</span><span class="p">,</span> <span class="kt">FILE</span> <span class="o">*</span><span class="n">fp_in</span><span class="p">,</span> <span class="kt">FILE</span> <span class="o">*</span><span class="n">fp_out</span><span class="p">,</span> <span class="kt">FILE</span> <span class="o">*</span><span class="n">fp_err</span><span class="p">,</span>
+                <span class="k">struct</span> <span class="n">timeval</span> <span class="o">*</span><span class="n">timeout</span><span class="p">)</span>
+<span class="p">{</span>
+   <span class="kt">int</span> <span class="n">i</span><span class="p">,</span> <span class="n">status</span><span class="p">;</span>
+   <span class="kt">long</span> <span class="n">timeout_us</span> <span class="o">=</span> <span class="n">timeout</span> <span class="o">?</span> <span class="p">(</span><span class="n">timeout</span><span class="o">-&gt;</span><span class="n">tv_sec</span> <span class="o">*</span> <span class="mi">1000000L</span> <span class="o">+</span> <span class="n">timeout</span><span class="o">-&gt;</span><span class="n">tv_usec</span><span class="p">)</span>
+                             <span class="o">:</span> <span class="mi">0</span><span class="p">;</span> <span class="c1">// 初始值timeout_us = timeout-&gt;tv_usec</span>
+
+   <span class="n">DENTER</span><span class="p">(</span><span class="n">TOP_LAYER</span><span class="p">,</span> <span class="s">&quot;sge_peclose&quot;</span><span class="p">);</span>
+
+   <span class="k">if</span> <span class="p">(</span><span class="n">fp_in</span> <span class="o">!=</span> <span class="nb">NULL</span><span class="p">)</span> <span class="p">{</span> <span class="c1">// 到jsv实例的输入、输出都关闭了</span>
+      <span class="n">FCLOSE</span><span class="p">(</span><span class="n">fp_in</span><span class="p">);</span>
+   <span class="p">}</span>
+   <span class="k">if</span> <span class="p">(</span><span class="n">fp_out</span> <span class="o">!=</span> <span class="nb">NULL</span><span class="p">)</span> <span class="p">{</span>
+      <span class="n">FCLOSE</span><span class="p">(</span><span class="n">fp_out</span><span class="p">);</span>
+   <span class="p">}</span>
+   <span class="k">if</span> <span class="p">(</span><span class="n">fp_err</span> <span class="o">!=</span> <span class="nb">NULL</span><span class="p">)</span> <span class="p">{</span>
+      <span class="n">FCLOSE</span><span class="p">(</span><span class="n">fp_err</span><span class="p">);</span>
+   <span class="p">}</span>
+</pre></div>
+
+
+<p>由于输入、输出关闭，<code>strace</code> jsv实例，会看到实例在发送数据的时候报EPIPE错误</p>
+<div class="highlight"><pre><span class="cp"># strace -f -p 8805 -e write 2&gt;&amp;1 -s 128 | egrep &#39;^write&#39;</span>
+<span class="n">write</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="s">&quot;ERROR JSV script got unknown command </span><span class="se">\&quot;\&quot;\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="mi">40</span><span class="p">)</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span> <span class="n">EPIPE</span> <span class="p">(</span><span class="n">Broken</span> <span class="n">pipe</span><span class="p">)</span>
+<span class="n">write</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="s">&quot;ERROR JSV script got unknown command </span><span class="se">\&quot;\&quot;\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="mi">40</span><span class="p">)</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span> <span class="n">EPIPE</span> <span class="p">(</span><span class="n">Broken</span> <span class="n">pipe</span><span class="p">)</span>
+<span class="n">write</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="s">&quot;ERROR JSV script got unknown command </span><span class="se">\&quot;\&quot;\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="mi">40</span><span class="p">)</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span> <span class="n">EPIPE</span> <span class="p">(</span><span class="n">Broken</span> <span class="n">pipe</span><span class="p">)</span>
+</pre></div>
+
+
+<p>这对应的是<code>${SGE_ROOT}/util/resources/jsv/jsv_include.sh</code>脚本里1723行代码，有兴趣可以了解一下，这里不展开。<em>(注：当前系统sge版本为Son of Grid Engine最新版本)</em></p>
+<p>接着说<code>sge_peclose()</code>函数。这里是一个while循环。</p>
+<div class="highlight"><pre><span class="c1">// source/libs/uti/sge_stdio.c</span>
+
+   <span class="k">do</span> <span class="p">{</span>
+      <span class="n">errno</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+      <span class="n">i</span> <span class="o">=</span> <span class="n">waitpid</span><span class="p">(</span><span class="n">pid</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">status</span><span class="p">,</span> <span class="n">timeout</span><span class="o">?</span><span class="n">WNOHANG</span><span class="o">:</span><span class="mi">0</span><span class="p">);</span> <span class="c1">// wait4系统调用</span>
+      <span class="k">if</span> <span class="p">(</span><span class="n">i</span><span class="o">==-</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+         <span class="n">DEXIT</span><span class="p">;</span>
+         <span class="k">return</span> <span class="n">errno</span><span class="p">;</span>
+      <span class="p">}</span>
+      <span class="k">if</span> <span class="p">(</span><span class="n">i</span><span class="o">==</span><span class="mi">0</span><span class="p">)</span> <span class="p">{</span> <span class="cm">/* not yet exited */</span>
+         <span class="k">if</span> <span class="p">(</span><span class="n">timeout_us</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span> <span class="c1">// timeout_us是一个非常大的值</span>
+<span class="cp">#ifdef WIN32 </span><span class="cm">/* kill not called */</span><span class="cp"></span>
+            <span class="n">DPRINTF</span><span class="p">((</span><span class="s">&quot;killing not yet implemented</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">));</span>
+            <span class="n">timeout</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+            <span class="cm">/* kill(pid, SIGKILL); */</span>
+<span class="cp">#else</span>
+            <span class="n">DPRINTF</span><span class="p">((</span><span class="s">&quot;killing</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">));</span>
+            <span class="n">timeout</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+            <span class="n">kill</span><span class="p">(</span><span class="n">pid</span><span class="p">,</span> <span class="n">SIGKILL</span><span class="p">);</span>
+<span class="cp">#endif </span><span class="cm">/* WIN32 */</span><span class="cp"></span>
+         <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+            <span class="cm">/* Spin less for longer timeouts; for timeout &gt; 1s, sleep</span>
+<span class="cm">               for 0.1s, n the loop, otherwise 1ms.  */</span>
+            <span class="kt">int</span> <span class="n">sleep_for</span> <span class="o">=</span> <span class="p">(</span><span class="n">timeout_us</span> <span class="o">&gt;</span> <span class="mi">1000000</span><span class="p">)</span> <span class="o">?</span> <span class="mi">100000</span> <span class="o">:</span> <span class="mi">1000</span><span class="p">;</span>
+
+            <span class="n">DPRINTF</span><span class="p">((</span><span class="s">&quot;%f seconds waiting for exit</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span>
+                     <span class="n">timeout</span><span class="o">-&gt;</span><span class="n">tv_sec</span> <span class="o">+</span> <span class="n">timeout</span><span class="o">-&gt;</span><span class="n">tv_usec</span> <span class="o">/</span> <span class="mf">1e6</span><span class="p">));</span>
+            <span class="n">timeout_us</span> <span class="o">-=</span> <span class="n">sleep_for</span><span class="p">;</span> <span class="c1">// timeout_us在这里调低，但要降到&lt;=0需时很长</span>
+            <span class="n">sge_usleep</span><span class="p">(</span><span class="n">sleep_for</span><span class="p">);</span> <span class="c1">// nanosleep系统调用</span>
+         <span class="p">}</span>
+      <span class="p">}</span>
+   <span class="p">}</span> <span class="k">while</span> <span class="p">(</span><span class="n">i</span> <span class="o">!=</span> <span class="n">pid</span><span class="p">);</span>
+</pre></div>
+
+
+<p>如果直接去<code>strace</code> 12019这个用户程序的进程，可以看到在进行<code>wait4()</code>和<code>nanosleep()</code>两个系统调用，对应的就是上面的<code>waitpid()</code>和<code>sge_usleep()</code>在进行底层的调用。</p>
+<div class="highlight"><pre><span class="cp"># strace -p 12019</span>
+<span class="n">Process</span> <span class="mi">12019</span> <span class="n">attached</span>
+<span class="n">restart_syscall</span><span class="p">(</span><span class="o">&lt;</span><span class="p">...</span> <span class="n">resuming</span> <span class="n">interrupted</span> <span class="n">call</span> <span class="p">...</span><span class="o">&gt;</span><span class="p">)</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="n">wait4</span><span class="p">(</span><span class="mi">8805</span><span class="p">,</span> <span class="mh">0x7ffda3d2ce3c</span><span class="p">,</span> <span class="n">WNOHANG</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">)</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="n">nanosleep</span><span class="p">({</span><span class="mi">0</span><span class="p">,</span> <span class="mi">100000000</span><span class="p">},</span> <span class="mh">0x7ffda3d2cdd0</span><span class="p">)</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="n">wait4</span><span class="p">(</span><span class="mi">8805</span><span class="p">,</span> <span class="mh">0x7ffda3d2ce3c</span><span class="p">,</span> <span class="n">WNOHANG</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">)</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="n">nanosleep</span><span class="p">({</span><span class="mi">0</span><span class="p">,</span> <span class="mi">100000000</span><span class="p">},</span> <span class="mh">0x7ffda3d2cdd0</span><span class="p">)</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="n">wait4</span><span class="p">(</span><span class="mi">8805</span><span class="p">,</span> <span class="mh">0x7ffda3d2ce3c</span><span class="p">,</span> <span class="n">WNOHANG</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">)</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="n">nanosleep</span><span class="p">({</span><span class="mi">0</span><span class="p">,</span> <span class="mi">100000000</span><span class="p">},</span> <span class="mh">0x7ffda3d2cdd0</span><span class="p">)</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="n">wait4</span><span class="p">(</span><span class="mi">8805</span><span class="p">,</span> <span class="mh">0x7ffda3d2ce3c</span><span class="p">,</span> <span class="n">WNOHANG</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">)</span> <span class="o">=</span> <span class="mi">0</span>
+</pre></div>
+
+
+<p>到这里我们就知道进程为什么不退出了，因为timeout_us是一个很大的值，不小于等于0，所以<code>sge_peclose()</code>函数并没有执行<code>kill(pid, SIGKILL)</code>，而是不断在执行下面这两步。</p>
+<div class="highlight"><pre>            <span class="n">timeout_us</span> <span class="o">-=</span> <span class="n">sleep_for</span><span class="p">;</span>
+            <span class="n">sge_usleep</span><span class="p">(</span><span class="n">sleep_for</span><span class="p">);</span>
+</pre></div>
+
+
+<p>从gdb可以看到timeout_us的值要减到小于等于0是要很长时间的。</p>
+<div class="highlight"><pre><span class="p">(</span><span class="n">gdb</span><span class="p">)</span> <span class="n">frame</span> <span class="mi">2</span>
+<span class="cp">#2  0x00007f80223d135e in sge_peclose (pid=8805, fp_in=&lt;value optimized out&gt;, fp_out=&lt;value optimized out&gt;, fp_err=&lt;value optimized out&gt;,</span>
+    <span class="n">timeout</span><span class="o">=</span><span class="mh">0x7ffda3d2ce80</span><span class="p">)</span> <span class="n">at</span> <span class="p">..</span><span class="o">/</span><span class="n">libs</span><span class="o">/</span><span class="n">uti</span><span class="o">/</span><span class="n">sge_stdio</span><span class="p">.</span><span class="n">c</span><span class="o">:</span><span class="mi">681</span>
+<span class="mi">681</span>                 <span class="n">sge_usleep</span><span class="p">(</span><span class="n">sleep_for</span><span class="p">);</span>
+<span class="p">(</span><span class="n">gdb</span><span class="p">)</span> <span class="n">info</span> <span class="n">locals</span>
+<span class="n">sleep_for</span> <span class="o">=</span> <span class="mi">100000</span>
+<span class="n">i</span> <span class="o">=</span> <span class="o">&lt;</span><span class="n">value</span> <span class="n">optimized</span> <span class="n">out</span><span class="o">&gt;</span>
+<span class="n">timeout_us</span> <span class="o">=</span> <span class="mi">140099372198732</span>
+<span class="n">SGE_FUNC</span> <span class="o">=</span> <span class="s">&quot;sge_peclose&quot;</span>
+</pre></div>
+
+
+<ol>
+<li>为什么会出现这个问题？</li>
+</ol>
+<p>主要是因为<code>jsv_stop()</code>函数里<code>t</code>这个值没有初始化，代码里只设置了<code>t.tv_sec</code>，没有设置<code>t.tv_usec</code>这个值，这会导致不确定的结果，也就是这里看到的超大值。</p>
+<div class="highlight"><pre><span class="c1">// linux/latest/source/include/uapi/linux/time.h</span>
+
+<span class="k">struct</span> <span class="n">timeval</span> <span class="p">{</span>
+    <span class="kt">__kernel_old_time_t</span> <span class="n">tv_sec</span><span class="p">;</span>     <span class="cm">/* seconds */</span>
+    <span class="kt">__kernel_suseconds_t</span>    <span class="n">tv_usec</span><span class="p">;</span>    <span class="cm">/* microseconds */</span>
+<span class="p">};</span>
+
+
+<span class="c1">// source/libs/sgeobj/sge_jsv.c</span>
+
+      <span class="k">struct</span> <span class="n">timeval</span> <span class="n">t</span><span class="p">;</span>
+
+      <span class="cm">/*</span>
+<span class="cm">       * send a quit command to stop the JSV softly.</span>
+<span class="cm">       * give it then JSV_QUIT_TIMEOUT seconds before</span>
+<span class="cm">       * the kill is triggered (sge_peclose)</span>
+<span class="cm">       */</span>
+      <span class="k">if</span> <span class="p">(</span><span class="n">try_soft_quit</span><span class="p">)</span> <span class="p">{</span> <span class="c1">// 大部分情况下，都是try_soft_quit=true，发送QUIT给jsv实例</span>
+         <span class="n">jsv_send_command</span><span class="p">(</span><span class="n">jsv</span><span class="p">,</span> <span class="n">answer_list</span><span class="p">,</span> <span class="s">&quot;QUIT&quot;</span><span class="p">);</span>
+         <span class="n">t</span><span class="p">.</span><span class="n">tv_sec</span> <span class="o">=</span> <span class="n">JSV_QUIT_TIMEOUT</span><span class="p">;</span>
+      <span class="p">}</span> <span class="k">else</span> <span class="p">{</span> <span class="c1">// 但这里的情况是不发送QUIT，下面会详细说明</span>
+         <span class="n">t</span><span class="p">.</span><span class="n">tv_sec</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+      <span class="p">}</span>
+</pre></div>
+
+
+<ol>
+<li>为什么有些作业有问题，有些作业有问题？</li>
+</ol>
+<p>我们再去看成backtrace的输出，frame 4是在<code>../libs/sgeobj/sge_jsv_script.c:2574</code>这一行，<code>do_retry = true</code>，<code>jsv_timeout = 10</code>。</p>
+<div class="highlight"><pre><span class="cp">#4  0x00007f80223360d9 in jsv_do_communication (ctx=0xa75270, jsv=0xa862b0, answer_list=&lt;value optimized out&gt;) at ../libs/sgeobj/sge_jsv_script.c:2574</span>
+        <span class="n">start_time</span> <span class="o">=</span> <span class="mi">1588999988</span>
+        <span class="n">do_retry</span> <span class="o">=</span> <span class="nb">true</span>
+        <span class="n">jsv_timeout</span> <span class="o">=</span> <span class="mi">10</span>
+        <span class="n">ret</span> <span class="o">=</span> <span class="nb">true</span>
+        <span class="n">input</span> <span class="o">=</span> <span class="s">&quot;STARTED</span><span class="se">\000</span><span class="s">TATE ACCEPT Job is accepted&quot;</span><span class="p">,</span> <span class="sc">&#39;\000&#39;</span> <span class="o">&lt;</span><span class="n">repeats</span> <span class="mi">197</span> <span class="n">times</span><span class="o">&gt;</span><span class="p">,</span> <span class="s">&quot;Ч{</span><span class="se">\237</span><span class="s">:</span><span class="se">\000\000\000\321</span><span class="s">.-</span><span class="se">\\\002\200\377\377\060\321</span><span class="s">ң</span><span class="se">\375\177\000\000</span><span class="s">/</span><span class="se">\321</span><span class="s">ң</span><span class="se">\375\177</span><span class="s">&quot;</span><span class="p">,</span> <span class="sc">&#39;\000&#39;</span> <span class="o">&lt;</span><span class="n">repeats</span> <span class="mi">82</span> <span class="n">times</span><span class="o">&gt;</span><span class="s">&quot;</span><span class="se">\200</span><span class="s">, </span><span class="se">\247</span><span class="s">{</span><span class="se">\237</span><span class="s">:</span><span class="se">\000\000\000\020\004\000\000\000\000\000\000\000\004\000\000\000\000\000\000\020</span><span class="s">T</span><span class="se">\250\000\000\000\000\000</span><span class="s">@3</span><span class="se">\252\000\000\000\000\000\b\a\001\000\000\000\000\000</span><span class="s">y</span><span class="se">\344</span><span class="s">G</span><span class="se">\237</span><span class="s">:</span><span class="se">\000\000\000\000\004\000\000\000\000\000\000\361</span><span class="s">--</span><span class="se">\\\002\200\377\377</span><span class="s">A</span><span class="se">\000\000\000\000\000\000\000\020\000\000\000\000\000\000\000</span><span class="s">@</span><span class="se">\000\000\000\000\000\000\000\002\000\000\000\000\000\000\000\020\322</span><span class="s">ң</span><span class="se">\375\177\000\000\000\000\000\000\000\000\000\000</span><span class="s">]</span><span class="se">\000\000\000</span><span class="s">n&quot;</span><span class="p">,</span> <span class="sc">&#39;\000&#39;</span> <span class="o">&lt;</span><span class="n">repeats</span> <span class="mi">19</span> <span class="n">times</span><span class="o">&gt;</span><span class="p">,</span> <span class="s">&quot;w</span><span class="se">\000\000\000</span><span class="s">|</span><span class="se">\000\000\000</span><span class="s">&quot;</span><span class="p">...</span>
+        <span class="n">SGE_FUNC</span> <span class="o">=</span> <span class="s">&quot;jsv_do_communication&quot;</span>
+</pre></div>
+
+
+<p>对着代码看，要执行2574这行，有两个条件：</p>
+<ul>
+<li><code>sge_get_gmt() - start_time &gt; jsv_timeout</code>，就是jsv运行时长已经超过jsv_timeout时间还没有结束<em>（注：默认10秒）</em></li>
+<li>超时后第一次<code>do_retry</code>。这是第一次也是唯一一次重试的机会。</li>
+</ul>
+<div class="highlight"><pre><span class="c1">// source/libs/sgeobj/sge_jsv_script.c</span>
+
+<span class="mi">2559</span>       <span class="nf">while</span> <span class="p">(</span><span class="o">!</span><span class="n">lGetBool</span><span class="p">(</span><span class="n">jsv</span><span class="p">,</span> <span class="n">JSV_done</span><span class="p">))</span> <span class="p">{</span> <span class="c1">// 不断重试，间隔10000微秒</span>
+<span class="mi">2560</span>          <span class="k">if</span> <span class="p">(</span><span class="n">sge_get_gmt</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span> <span class="o">&gt;</span> <span class="n">jsv_timeout</span><span class="p">)</span> <span class="p">{</span> <span class="c1">// 直至超时执行下面的代码</span>
+<span class="mi">2561</span>             <span class="n">DPRINTF</span><span class="p">((</span><span class="s">&quot;JSV - master waited longer than %d s to get response from JSV</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">jsv_timeout</span><span class="p">));</span>
+<span class="mi">2562</span>             <span class="cm">/*</span>
+<span class="cm">2563              * In case of a timeout we try it a second time. In that case we kill</span>
+<span class="cm">2564              * the old instance and start a new one before we continue</span>
+<span class="cm">2565              * with the verification. Otherwise we report an error which will</span>
+<span class="cm">2566              * automatically reject the job which should be verified.</span>
+<span class="cm">2567              */</span>
+<span class="mi">2568</span>             <span class="k">if</span> <span class="p">(</span><span class="n">do_retry</span><span class="p">)</span> <span class="p">{</span> <span class="c1">// do_retry初始值是true，这里会重试一次</span>
+<span class="mi">2569</span>                <span class="n">DPRINTF</span><span class="p">((</span><span class="s">&quot;JSV - will retry verification</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">));</span><span class="o">-</span>
+<span class="mi">2570</span>                <span class="n">lSetBool</span><span class="p">(</span><span class="n">jsv</span><span class="p">,</span> <span class="n">JSV_restart</span><span class="p">,</span> <span class="nb">false</span><span class="p">);</span>
+<span class="mi">2571</span>                <span class="n">lSetBool</span><span class="p">(</span><span class="n">jsv</span><span class="p">,</span> <span class="n">JSV_accept</span><span class="p">,</span> <span class="nb">false</span><span class="p">);</span>
+<span class="mi">2572</span>                <span class="n">lSetBool</span><span class="p">(</span><span class="n">jsv</span><span class="p">,</span> <span class="n">JSV_done</span><span class="p">,</span> <span class="nb">false</span><span class="p">);</span>
+<span class="mi">2573</span>                <span class="n">DPRINTF</span><span class="p">((</span><span class="s">&quot;JSV process will be stopped now</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">));</span>
+<span class="mi">2574</span>                <span class="n">ret</span> <span class="o">&amp;=</span> <span class="n">jsv_stop</span><span class="p">(</span><span class="n">jsv</span><span class="p">,</span> <span class="n">answer_list</span><span class="p">,</span> <span class="nb">false</span><span class="p">);</span> <span class="c1">// 卡在这里，最后参数为false，导致不发送QUIT给jsv</span>
+<span class="mi">2575</span>                <span class="k">if</span> <span class="p">(</span><span class="n">ret</span><span class="p">)</span> <span class="p">{</span>
+<span class="mi">2576</span>                   <span class="n">DPRINTF</span><span class="p">((</span><span class="s">&quot;JSV process will be started now</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">));</span>
+<span class="mi">2577</span>                   <span class="n">ret</span> <span class="o">&amp;=</span> <span class="n">jsv_start</span><span class="p">(</span><span class="n">jsv</span><span class="p">,</span> <span class="n">answer_list</span><span class="p">);</span>
+<span class="mi">2578</span>                <span class="p">}</span>
+<span class="mi">2579</span>                <span class="k">if</span> <span class="p">(</span><span class="n">ret</span><span class="p">)</span> <span class="p">{</span>
+<span class="mi">2580</span>                   <span class="n">DPRINTF</span><span class="p">((</span><span class="s">&quot;JSV process gets START command</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">));</span>
+<span class="mi">2581</span>                   <span class="k">while</span> <span class="p">(</span><span class="n">fscanf</span><span class="p">(</span><span class="n">lGetRef</span><span class="p">(</span><span class="n">jsv</span><span class="p">,</span> <span class="n">JSV_err</span><span class="p">),</span> <span class="s">&quot;%[^</span><span class="se">\n</span><span class="s">]</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">input</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+<span class="mi">2582</span>                      <span class="n">ERROR</span><span class="p">((</span><span class="n">SGE_EVENT</span><span class="p">,</span> <span class="n">MSG_JSV_LOGMSG_S</span><span class="p">,</span> <span class="n">input</span><span class="p">));</span><span class="o">--</span>
+<span class="mi">2583</span>                   <span class="p">}</span>
+<span class="mi">2584</span>                   <span class="n">ret</span> <span class="o">&amp;=</span> <span class="n">jsv_send_command</span><span class="p">(</span><span class="n">jsv</span><span class="p">,</span> <span class="n">answer_list</span><span class="p">,</span> <span class="s">&quot;START&quot;</span><span class="p">);</span>
+<span class="mi">2585</span>                <span class="p">}</span>
+<span class="mi">2586</span>                <span class="n">start_time</span> <span class="o">=</span> <span class="n">sge_get_gmt</span><span class="p">();</span>
+<span class="mi">2587</span>                <span class="n">do_retry</span> <span class="o">=</span> <span class="nb">false</span><span class="p">;</span>
+</pre></div>
+
+
+<p>所以，如果jsv执行得快的话，就不会有问题。目前发现有问题的都是通过drmaa投递的，猜测可能的情况时，自动化脚本短时间内会投递大量作业，导致性能问题，jsv执行慢，出现超时现象，然后导致这些作业投递失败。</p>
+<h2>解决方案</h2>
+<p>纵观代码，总共有两处地方传递了<code>timeout</code>参数给<code>sge_peclose()</code>，而没有初始化<code>tv_usec</code>的值。代码本来并没有想着要用<code>tv_usec</code>的值，但<a href="https://gitlab.com/loveshack/sge/-/commit/227a844537c68781044938f0bbe5597a3c749822">commit 227a8445</a>修改了<code>sge_peclose()</code>函数sleep代码的逻辑，使用了<code>tv_usec</code>的值。</p>
+<p>所以，代码最终修改如下，涉及两个文件：</p>
+<div class="highlight"><pre><span class="cp"># diff -p -r sge-master.orig/ sge-master/</span>
+<span class="n">diff</span> <span class="o">-</span><span class="n">p</span> <span class="o">-</span><span class="n">r</span> <span class="n">sge</span><span class="o">-</span><span class="n">master</span><span class="p">.</span><span class="n">orig</span><span class="o">/</span><span class="n">source</span><span class="o">/</span><span class="n">daemons</span><span class="o">/</span><span class="n">execd</span><span class="o">/</span><span class="n">sge_load_sensor</span><span class="p">.</span><span class="n">c</span> <span class="n">sge</span><span class="o">-</span><span class="n">master</span><span class="o">/</span><span class="n">source</span><span class="o">/</span><span class="n">daemons</span><span class="o">/</span><span class="n">execd</span><span class="o">/</span><span class="n">sge_load_sensor</span><span class="p">.</span><span class="n">c</span>
+<span class="o">***</span> <span class="n">sge</span><span class="o">-</span><span class="n">master</span><span class="p">.</span><span class="n">orig</span><span class="o">/</span><span class="n">source</span><span class="o">/</span><span class="n">daemons</span><span class="o">/</span><span class="n">execd</span><span class="o">/</span><span class="n">sge_load_sensor</span><span class="p">.</span><span class="n">c</span>      <span class="mi">2019</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">13</span> <span class="mo">00</span><span class="o">:</span><span class="mi">54</span><span class="o">:</span><span class="mf">13.000000000</span> <span class="o">+</span><span class="mi">0800</span>
+<span class="o">---</span> <span class="n">sge</span><span class="o">-</span><span class="n">master</span><span class="o">/</span><span class="n">source</span><span class="o">/</span><span class="n">daemons</span><span class="o">/</span><span class="n">execd</span><span class="o">/</span><span class="n">sge_load_sensor</span><span class="p">.</span><span class="n">c</span>   <span class="mi">2020</span><span class="o">-</span><span class="mo">05</span><span class="o">-</span><span class="mi">11</span> <span class="mi">10</span><span class="o">:</span><span class="mi">31</span><span class="o">:</span><span class="mf">58.928879447</span> <span class="o">+</span><span class="mi">0800</span>
+<span class="o">***************</span> <span class="k">static</span> <span class="kt">void</span> <span class="n">sge_ls_stop_ls</span><span class="p">(</span><span class="n">lListElem</span> <span class="o">*</span><span class="n">th</span>
+<span class="o">***</span> <span class="mi">385</span><span class="p">,</span><span class="mi">390</span> <span class="o">****</span>
+<span class="o">---</span> <span class="mi">385</span><span class="p">,</span><span class="mi">396</span> <span class="o">----</span>
+        <span class="n">ret</span> <span class="o">=</span> <span class="n">LS_BROKEN_PIPE</span><span class="p">;</span>
+     <span class="p">}</span>
+
+<span class="o">+</span>    <span class="cm">/* fix uninitialized t.tv_usec cause undefined behaviour bug.</span>
+<span class="cm">+    * commit 227a8445 replace sleep() with higher resolution sge_usleep().</span>
+<span class="cm">+    * it use not only t.tv_sec, but also t.tv_usec.</span>
+<span class="cm">+    */</span>
+<span class="o">+</span>    <span class="n">t</span><span class="p">.</span><span class="n">tv_usec</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="o">+</span>
+     <span class="n">memset</span><span class="p">(</span><span class="o">&amp;</span><span class="n">t</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">t</span><span class="p">));</span>
+     <span class="k">if</span> <span class="p">(</span><span class="n">ret</span> <span class="o">==</span> <span class="n">LS_OK</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">t</span><span class="p">.</span><span class="n">tv_sec</span> <span class="o">=</span> <span class="n">LS_QUIT_TIMEOUT</span><span class="p">;</span>
+<span class="n">diff</span> <span class="o">-</span><span class="n">p</span> <span class="o">-</span><span class="n">r</span> <span class="n">sge</span><span class="o">-</span><span class="n">master</span><span class="p">.</span><span class="n">orig</span><span class="o">/</span><span class="n">source</span><span class="o">/</span><span class="n">libs</span><span class="o">/</span><span class="n">sgeobj</span><span class="o">/</span><span class="n">sge_jsv</span><span class="p">.</span><span class="n">c</span> <span class="n">sge</span><span class="o">-</span><span class="n">master</span><span class="o">/</span><span class="n">source</span><span class="o">/</span><span class="n">libs</span><span class="o">/</span><span class="n">sgeobj</span><span class="o">/</span><span class="n">sge_jsv</span><span class="p">.</span><span class="n">c</span>
+<span class="o">***</span> <span class="n">sge</span><span class="o">-</span><span class="n">master</span><span class="p">.</span><span class="n">orig</span><span class="o">/</span><span class="n">source</span><span class="o">/</span><span class="n">libs</span><span class="o">/</span><span class="n">sgeobj</span><span class="o">/</span><span class="n">sge_jsv</span><span class="p">.</span><span class="n">c</span>        <span class="mi">2019</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">13</span> <span class="mo">00</span><span class="o">:</span><span class="mi">54</span><span class="o">:</span><span class="mf">13.000000000</span> <span class="o">+</span><span class="mi">0800</span>
+<span class="o">---</span> <span class="n">sge</span><span class="o">-</span><span class="n">master</span><span class="o">/</span><span class="n">source</span><span class="o">/</span><span class="n">libs</span><span class="o">/</span><span class="n">sgeobj</span><span class="o">/</span><span class="n">sge_jsv</span><span class="p">.</span><span class="n">c</span>     <span class="mi">2020</span><span class="o">-</span><span class="mo">05</span><span class="o">-</span><span class="mi">11</span> <span class="mi">10</span><span class="o">:</span><span class="mi">28</span><span class="o">:</span><span class="mf">46.054555752</span> <span class="o">+</span><span class="mi">0800</span>
+<span class="o">***************</span> <span class="n">jsv_stop</span><span class="p">(</span><span class="n">lListElem</span> <span class="o">*</span><span class="n">jsv</span><span class="p">,</span> <span class="n">lList</span> <span class="o">**</span><span class="n">answer_</span>
+<span class="o">***</span> <span class="mi">375</span><span class="p">,</span><span class="mi">380</span> <span class="o">****</span>
+<span class="o">---</span> <span class="mi">375</span><span class="p">,</span><span class="mi">386</span> <span class="o">----</span>
+        <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">scriptfile</span> <span class="o">=</span> <span class="n">lGetString</span><span class="p">(</span><span class="n">jsv</span><span class="p">,</span> <span class="n">JSV_command</span><span class="p">);</span>
+        <span class="k">struct</span> <span class="n">timeval</span> <span class="n">t</span><span class="p">;</span>
+
+<span class="o">+</span>       <span class="cm">/* fix uninitialized t.tv_usec cause undefined behaviour bug.</span>
+<span class="cm">+        * commit 227a8445 replace sleep() with higher resolution sge_usleep().</span>
+<span class="cm">+        * it use not only t.tv_sec, but also t.tv_usec.</span>
+<span class="cm">+        */</span>
+<span class="o">+</span>       <span class="n">t</span><span class="p">.</span><span class="n">tv_usec</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="o">+</span>
+        <span class="o">/*</span>
+         <span class="o">*</span> <span class="n">send</span> <span class="n">a</span> <span class="n">quit</span> <span class="n">command</span> <span class="n">to</span> <span class="n">stop</span> <span class="n">the</span> <span class="n">JSV</span> <span class="n">softly</span><span class="p">.</span>
+         <span class="o">*</span> <span class="n">give</span> <span class="n">it</span> <span class="n">then</span> <span class="n">JSV_QUIT_TIMEOUT</span> <span class="n">seconds</span> <span class="n">before</span>
+</pre></div>
+
+
+<p>重新编译sge，并替换libdrmaa.so.1.0文件。</p>
+<h2>总结</h2>
+<p>sge代码的bug是主要的原因，但jsv的效率也需要做一下性能测试。理论上目前jsv脚本的操作很简单，不应该耗时长，但还是要有实际数据来佐证。</p></div>
+    <footer>
+<p class="meta">
+  <span class="byline author vcard">
+    Posted by <span class="fn">
+        Yang Liping
+    </span>
+  </span>
+<time datetime="2020-05-11T11:20:03.073331+08:00" pubdate>Mon 11 May 2020</time>  <span class="categories">
+    <a class='category' href='http://www.yanglp.com/category/tech.html'>Tech</a>
+  </span>
+  <span class="categories">
+    <a class="category" href="http://www.yanglp.com/tag/sge.html">sge</a>  </span>
+</p><div class="sharing">
+</div>    </footer>
+  </article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript></div>
+  </section>
+</div>
+<aside class="sidebar">
+  <section>
+    <h1>Recent Posts</h1>
+    <ul id="recent_posts">
+      <li class="post">
+          <a href="http://www.yanglp.com/posts/2020/05/11/sge-jsv-hang-issue.html">sge jsv hang issue</a>
+      </li>
+      <li class="post">
+          <a href="http://www.yanglp.com/posts/2020/05/08/yong-gdb-deubg-bashshu-chu-bu-zheng-chang-wen-ti.html">用gdb deubg bash输出不正常问题</a>
+      </li>
+      <li class="post">
+          <a href="http://www.yanglp.com/posts/2020/04/27/bashyin-yong-ming-ling-can-shu.html">bash引用命令参数</a>
+      </li>
+      <li class="post">
+          <a href="http://www.yanglp.com/posts/2020/04/25/python-import-sgeku-wen-jian.html">python import sge库文件</a>
+      </li>
+      <li class="post">
+          <a href="http://www.yanglp.com/posts/2019/12/18/mvclidao-zhi-da-liang-zfs-vdevbad_ashiftri-zhi.html">mvcli导致大量zfs vdev.bad_ashift日志</a>
+      </li>
+    </ul>
+  </section>
+  <section>
+      
+    <h1>Categories</h1>
+    <ul id="recent_posts">
+        <li><a href="http://www.yanglp.com/category/tech.html">Tech</a></li>
+    </ul>
+  </section>
+ 
+
+  <section>
+  <h1>Tags</h1>
+    <a href="http://www.yanglp.com/tag/python.html">python</a>,    <a href="http://www.yanglp.com/tag/vim.html">vim</a>,    <a href="http://www.yanglp.com/tag/zfs.html">zfs</a>,    <a href="http://www.yanglp.com/tag/gdb.html">gdb</a>,    <a href="http://www.yanglp.com/tag/dns.html">DNS</a>,    <a href="http://www.yanglp.com/tag/linux.html">linux</a>,    <a href="http://www.yanglp.com/tag/sge.html">sge</a>,    <a href="http://www.yanglp.com/tag/bash.html">bash</a>  </section>
+
+
+    <section>
+        <h1>Blogroll</h1>
+        <ul>
+            <li><a href="http://getpelican.com/" target="_blank">Pelican</a></li>
+            <li><a href="http://python.org/" target="_blank">Python.org</a></li>
+            <li><a href="http://jinja.pocoo.org/" target="_blank">Jinja2</a></li>
+        </ul>
+    </section>
+
+</aside>    </div>
+  </div>
+  <footer role="contentinfo"><p>
+    Copyright &copy;  2014&ndash;2020  Yang Liping &mdash;
+  <span class="credit">Powered by <a href="http://getpelican.com">Pelican</a></span>
+</p></footer>
+  <script src="http://www.yanglp.com/theme/js/modernizr-2.0.js"></script>
+  <script src="http://www.yanglp.com/theme/js/ender.js"></script>
+  <script src="http://www.yanglp.com/theme/js/octopress.js" type="text/javascript"></script>
+    <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-50095101-1']);
+    _gaq.push(['_trackPageview']);
+    (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-50095101-1');
+    ga('send', 'pageview');
+</script>
+  <script type="text/javascript">
+    var disqus_shortname = 'yanglp';
+    var disqus_identifier = '/posts/2020/05/11/sge-jsv-hang-issue.html';
+    var disqus_url = 'http://www.yanglp.com/posts/2020/05/11/sge-jsv-hang-issue.html';
+    var disqus_title = 'sge jsv hang issue';
+    (function() {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = "//" + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+     })();
+  </script>
+</body>
+</html>
