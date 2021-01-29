@@ -52,6 +52,23 @@
   		<article>
 <header>
       <h1 class="entry-title">
+        <a href="http://www.yanglp.com/posts/2021/01/29/sudochang-yong-ti-quan-fang-shi.html">sudo常用提权方式</a>
+      </h1>
+    <p class="meta">
+<time datetime="2021-01-29T15:29:39.139086+08:00" pubdate>Fri 29 January 2021</time>    </p>
+</header>
+
+  <div class="entry-content"><h4>用户可写的目录或文件</h4>
+<p><strong>使用场景</strong>：允许用户执行<code>sudo /home/user/script.sh</code>以其他用户权限执行脚本，用户可以直接修改<code>script.sh</code>或者替换成其他文件，从而实现提权。</p>
+<div class="highlight"><pre><span class="n">user</span><span class="err">@</span><span class="n">server</span><span class="o">:~</span><span class="err">$</span> <span class="n">ls</span> <span class="o">-</span><span class="n">ld</span> <span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">yangliping</span> <span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">yangliping</span><span class="o">/</span><span class="n">sudo</span> <span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">yangliping</span><span class="o">/</span><span class="n">sudo</span><span class="o">/</span><span class="n">bin</span> <span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">yangliping</span><span class="o">/</span><span class="n">sudo</span><span class="o">/</span><span class="n">bin</span><span class="o">/</span><span class="n">hello</span><span class="p">.</span><span class="n">sh</span> <span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">yangliping</span><span class="o">/</span><span class="n">sudo_hack</span> <span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">yangliping</span><span class="o">/</span><span class="n">sudo_hack</span><span class="o">/</span><span class="n">bin</span> <span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">yangliping</span><span class="o">/</span><span class="n">sudo_hack</span><span class="o">/</span><span class="n">bin</span><span class="o">/</span><span class="n">hello</span><span class="p">.</span><span class="n">sh</span>
+<span class="n">drwx</span><span class="o">------</span> <span class="mi">28</span> <span class="n">yangliping</span> <span class="n">yangliping …</span></pre></div></div>
+  <footer>
+    <a rel="full-article" href="http://www.yanglp.com/posts/2021/01/29/sudochang-yong-ti-quan-fang-shi.html">Read On &crarr;</a>
+  </footer>
+  		</article>
+  		<article>
+<header>
+      <h1 class="entry-title">
         <a href="http://www.yanglp.com/posts/2020/05/16/git-push-sgecang-ku-dao-gitlabfu-wu-qi-shi-bai-wen-ti.html">git push sge仓库到gitlab服务器失败问题</a>
       </h1>
     <p class="meta">
@@ -254,6 +271,9 @@
     <h1>Recent Posts</h1>
     <ul id="recent_posts">
       <li class="post">
+          <a href="http://www.yanglp.com/posts/2021/01/29/sudochang-yong-ti-quan-fang-shi.html">sudo常用提权方式</a>
+      </li>
+      <li class="post">
           <a href="http://www.yanglp.com/posts/2020/05/16/git-push-sgecang-ku-dao-gitlabfu-wu-qi-shi-bai-wen-ti.html">git push sge仓库到gitlab服务器失败问题</a>
       </li>
       <li class="post">
@@ -264,9 +284,6 @@
       </li>
       <li class="post">
           <a href="http://www.yanglp.com/posts/2020/04/27/bashyin-yong-ming-ling-can-shu.html">bash引用命令参数</a>
-      </li>
-      <li class="post">
-          <a href="http://www.yanglp.com/posts/2020/04/25/python-import-sgeku-wen-jian.html">python import sge库文件</a>
       </li>
     </ul>
   </section>
@@ -282,7 +299,7 @@
 
   <section>
   <h1>Tags</h1>
-    <a href="http://www.yanglp.com/tag/git.html">git</a>,    <a href="http://www.yanglp.com/tag/python.html">python</a>,    <a href="http://www.yanglp.com/tag/vim.html">vim</a>,    <a href="http://www.yanglp.com/tag/zfs.html">zfs</a>,    <a href="http://www.yanglp.com/tag/gdb.html">gdb</a>,    <a href="http://www.yanglp.com/tag/dns.html">DNS</a>,    <a href="http://www.yanglp.com/tag/linux.html">linux</a>,    <a href="http://www.yanglp.com/tag/sge.html">sge</a>,    <a href="http://www.yanglp.com/tag/bash.html">bash</a>  </section>
+    <a href="http://www.yanglp.com/tag/git.html">git</a>,    <a href="http://www.yanglp.com/tag/python.html">python</a>,    <a href="http://www.yanglp.com/tag/sudo.html">sudo</a>,    <a href="http://www.yanglp.com/tag/vim.html">vim</a>,    <a href="http://www.yanglp.com/tag/zfs.html">zfs</a>,    <a href="http://www.yanglp.com/tag/gdb.html">gdb</a>,    <a href="http://www.yanglp.com/tag/dns.html">DNS</a>,    <a href="http://www.yanglp.com/tag/linux.html">linux</a>,    <a href="http://www.yanglp.com/tag/security.html">security</a>,    <a href="http://www.yanglp.com/tag/sge.html">sge</a>,    <a href="http://www.yanglp.com/tag/bash.html">bash</a>  </section>
 
 
     <section>
@@ -297,7 +314,7 @@
 </aside>    </div>
   </div>
   <footer role="contentinfo"><p>
-    Copyright &copy;  2014&ndash;2020  Yang Liping &mdash;
+    Copyright &copy;  2014&ndash;2021  Yang Liping &mdash;
   <span class="credit">Powered by <a href="http://getpelican.com">Pelican</a></span>
 </p></footer>
   <script src="http://www.yanglp.com/theme/js/modernizr-2.0.js"></script>

